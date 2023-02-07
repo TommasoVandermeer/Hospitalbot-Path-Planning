@@ -1,0 +1,877 @@
+<?xml version="1.0" ?>
+<!--
+  Pionee3at - 4wd Diff Drive with Lidar
+
+  Try sending commands:
+
+    ros2 topic pub /demo/cmd_vel geometry_msgs/Twist '{linear: {x: 0.05}}' -1
+
+    ros2 topic pub /demo/cmd_vel geometry_msgs/Twist '{angular: {z: 0.1}}' -1
+
+  Try listening to odometry:
+
+    ros2 topic echo /demo/odom
+
+  Try listening to TF:
+
+    ros2 run tf2_ros tf2_echo odom chassis (translation and rotation of chassis)
+
+    ros2 run tf2_ros tf2_echo chassis right_wheel
+
+    ros2 run tf2_ros tf2_echo chassis left_wheel
+
+  Try listening the LIDAR:
+
+    ros2 topic echo /demo/laser/out
+-->
+<sdf version='1.7'>
+  <model name='pioneer3at'>
+    <link name='base_link'>
+      <inertial>
+        <pose>-0.000108 0 0.172396 0 -0 0</pose>
+        <mass>11.1</mass>
+        <inertia>
+          <ixx>11.3649</ixx>
+          <ixy>0</ixy>
+          <ixz>-0.000345176</ixz>
+          <iyy>11.5059</iyy>
+          <iyz>0</iyz>
+          <izz>11.3808</izz>
+        </inertia>
+      </inertial>
+      <collision name='base_link_collision'>
+        <pose>0 0 0.177 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/chassis.stl</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__back_sonar_collision_1'>
+        <pose>-0.187 0 0.247 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0 0 0</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__front_sonar_collision_2'>
+        <pose>0.193 0 0.25 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0 0 0</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_front_left_axle_collision_3'>
+        <pose>0.135 0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0 0 0</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_front_left_hub_collision_4'>
+        <pose>0.135 0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0 0 0</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_front_right_axle_collision_5'>
+        <pose>0.135 -0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0 0 0</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_front_right_hub_collision_6'>
+        <pose>0.135 -0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0 0 0</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__top_plate_collision_7'>
+        <pose>0.003 0 0.274 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0 0 0</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_back_left_axle_collision_8'>
+        <pose>-0.134 0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/axle.stl</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_back_left_hub_collision_9'>
+        <pose>-0.134 0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/left_hubcap.stl</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_back_right_axle_collision_10'>
+        <pose>-0.134 -0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/axle.stl</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_link_fixed_joint_lump__p3at_back_right_hub_collision_11'>
+        <pose>-0.134 -0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/right_hubcap.stl</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='base_link_visual'>
+        <pose>0 0 0.177 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/chassis.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__back_sonar_visual_1'>
+        <pose>-0.187 0 0.247 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/back_sonar.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Yellow</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__front_sonar_visual_2'>
+        <pose>0.193 0 0.25 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/front_sonar.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Yellow</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_front_left_axle_visual_3'>
+        <pose>0.135 0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/axle.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Grey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_front_left_hub_visual_4'>
+        <pose>0.135 0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/left_hubcap.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Yellow</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_front_right_axle_visual_5'>
+        <pose>0.135 -0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/axle.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Grey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_front_right_hub_visual_6'>
+        <pose>0.135 -0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/right_hubcap.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Yellow</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__top_plate_visual_7'>
+        <pose>0.003 0 0.274 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/top.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_back_left_axle_visual_8'>
+        <pose>-0.134 0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/axle.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Grey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_back_left_hub_visual_9'>
+        <pose>-0.134 0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/left_hubcap.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Yellow</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_back_right_axle_visual_10'>
+        <pose>-0.134 -0.156 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/axle.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Grey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='base_link_fixed_joint_lump__p3at_back_right_hub_visual_11'>
+        <pose>-0.134 -0.197 0.111 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/right_hubcap.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Yellow</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <joint name='p3at_front_left_wheel_joint' type='revolute'>
+      <pose relative_to='base_link'>0.135 0.197 0.111 0 -0 0</pose>
+      <parent>base_link</parent>
+      <child>p3at_front_left_wheel</child>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <effort>100</effort>
+          <velocity>100</velocity>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='p3at_front_left_wheel'>
+      <pose relative_to='p3at_front_left_wheel_joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.5</mass>
+        <inertia>
+          <ixx>0.0124118</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0152182</iyy>
+          <iyz>0</iyz>
+          <izz>0.011764</izz>
+        </inertia>
+      </inertial>
+      <collision name='p3at_front_left_wheel_collision'>
+        <pose>0 0 0 -1.5708 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.075</length>
+            <radius>0.111</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <kp>1e+06</kp>
+              <kd>100</kd>
+              <max_vel>1</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>10</mu>
+              <mu2>1</mu2>
+              <fdir1>0 1 0</fdir1>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='p3at_front_left_wheel_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/wheel.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <joint name='p3at_front_right_wheel_joint' type='revolute'>
+      <pose relative_to='base_link'>0.135 -0.197 0.111 0 -0 0</pose>
+      <parent>base_link</parent>
+      <child>p3at_front_right_wheel</child>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <effort>100</effort>
+          <velocity>100</velocity>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='p3at_front_right_wheel'>
+      <pose relative_to='p3at_front_right_wheel_joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.5</mass>
+        <inertia>
+          <ixx>0.0124118</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0152182</iyy>
+          <iyz>0</iyz>
+          <izz>0.011764</izz>
+        </inertia>
+      </inertial>
+      <collision name='p3at_front_right_wheel_collision'>
+        <pose>0 0 0 -1.5708 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.075</length>
+            <radius>0.111</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <kp>1e+06</kp>
+              <kd>100</kd>
+              <max_vel>1</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>10</mu>
+              <mu2>1</mu2>
+              <fdir1>0 1 0</fdir1>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='p3at_front_right_wheel_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/wheel.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <joint name='p3at_back_left_wheel_joint' type='revolute'>
+      <pose relative_to='base_link'>-0.134 0.197 0.111 0 -0 0</pose>
+      <parent>base_link</parent>
+      <child>p3at_back_left_wheel</child>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <effort>100</effort>
+          <velocity>100</velocity>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='p3at_back_left_wheel'>
+      <pose relative_to='p3at_back_left_wheel_joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.5</mass>
+        <inertia>
+          <ixx>0.0124118</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0152182</iyy>
+          <iyz>0</iyz>
+          <izz>0.011764</izz>
+        </inertia>
+      </inertial>
+      <collision name='p3at_back_left_wheel_collision'>
+        <pose>0 0 0 -1.5708 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.075</length>
+            <radius>0.111</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <kp>1e+06</kp>
+              <kd>100</kd>
+              <max_vel>1</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>10</mu>
+              <mu2>1</mu2>
+              <fdir1>0 1 0</fdir1>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='p3at_back_left_wheel_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/wheel.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <joint name='p3at_back_right_wheel_joint' type='revolute'>
+      <pose relative_to='base_link'>-0.134 -0.197 0.111 0 -0 0</pose>
+      <parent>base_link</parent>
+      <child>p3at_back_right_wheel</child>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <effort>100</effort>
+          <velocity>100</velocity>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='p3at_back_right_wheel'>
+      <pose relative_to='p3at_back_right_wheel_joint'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>0.5</mass>
+        <inertia>
+          <ixx>0.0124118</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0152182</iyy>
+          <iyz>0</iyz>
+          <izz>0.011764</izz>
+        </inertia>
+      </inertial>
+      <collision name='p3at_back_right_wheel_collision'>
+        <pose>0 0 0 -1.5708 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.075</length>
+            <radius>0.111</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <kp>1e+06</kp>
+              <kd>100</kd>
+              <max_vel>1</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>10</mu>
+              <mu2>1</mu2>
+              <fdir1>0 1 0</fdir1>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='p3at_back_right_wheel_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://pioneer3at/meshes/wheel.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <plugin name='diff_drive' filename='libgazebo_ros_diff_drive.so'>
+      <ros>
+      <namespace>/demo</namespace>
+      <remapping>cmd_vel:=cmd_vel</remapping>
+      <remapping>odom:=odom</remapping>
+      </ros>
+
+      <!-- Number of wheel pairs -->
+      <num_wheel_pairs>2</num_wheel_pairs>
+
+      <!-- wheels0 -->
+      <left_joint>p3at_front_left_wheel_joint</left_joint>
+      <right_joint>p3at_front_right_wheel_joint</right_joint>
+
+      <!-- wheels1-->
+      <left_joint>p3at_back_left_wheel_joint</left_joint>
+      <right_joint>p3at_back_right_wheel_joint</right_joint>
+
+      <!-- kinematics -->
+      <wheel_separation>0.4</wheel_separation>
+      <wheel_separation>0.4</wheel_separation>
+
+      <wheel_diameter>0.215</wheel_diameter>
+      <wheel_diameter>0.215</wheel_diameter>
+
+      <!-- limits -->
+      <max_wheel_torque>200</max_wheel_torque>
+      <max_wheel_acceleration>1.0</max_wheel_acceleration>
+
+      <!-- output -->
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+      <publish_wheel_tf>true</publish_wheel_tf>
+
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>chassis</robot_base_frame>
+    </plugin>
+
+    <!-- Add the laser range finder -->
+    <link name="laser_link">
+      <inertial>
+        <!-- Mass of the laser range finder in kg -->
+        <mass>0.1</mass>
+      </inertial>
+      <!-- Position is towards the front of the robot -->
+      <!-- Laser finder is mounted on top -->
+      <pose>0.15 0 0.30 0 0 0</pose>
+      
+      <!-- Add a mesh to make it more visually appealing -->
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://hokuyo/meshes/hokuyo.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      
+      <!-- Collision properties of the base of the laser range finder-->
+      <collision name="collision-base">
+        <pose>0 0 -0.0145 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05 0.05 0.041</size>
+          </box>
+        </geometry>
+      </collision>
+      <!-- Collision properties of the top of the laser range finder-->
+      <collision name="collision-top">
+        <pose>0 0 0.0205 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.021</radius>
+            <length>0.029</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      
+      <!-- Describes the type and properties of the sensor -->
+      <sensor name="laser" type="ray">
+        <pose>0.01 0 0.0175 0 -0 0</pose>
+              <ray>
+                <scan>
+                  <horizontal>
+                    <samples>61</samples>
+                    <resolution>1</resolution>
+                    <min_angle>-1.57080</min_angle>
+                    <max_angle>1.57080</max_angle>
+                  </horizontal>
+                </scan>
+                <range>
+                  <min>0.08</min>
+                  <max>10</max>
+                  <resolution>0.05</resolution>
+                </range>
+              </ray>
+              <always_on>1</always_on>
+              <update_rate>10</update_rate>
+              <visualize>true</visualize>
+
+              <plugin name='laser' filename='libgazebo_ros_ray_sensor.so'>
+                <ros>
+                  <namespace>/demo</namespace>
+                  <argument>--ros-args --remap ~/out:=scan</argument>
+                </ros>
+                <output_type>sensor_msgs/LaserScan</output_type>
+              </plugin>
+      </sensor>
+    </link>
+
+    <!-- Connect laser range finder to the robot's body -->
+    <joint type="fixed" name="laser_joint">
+      <child>laser_link</child>
+      <parent>base_link</parent>
+    </joint>
+
+    <frame name='base_back_joint' attached_to='base_link'>
+      <pose>-0.187 0 0.247 0 -0 0</pose>
+    </frame>
+    <frame name='back_sonar' attached_to='base_back_joint'/>
+    <frame name='base_front_joint' attached_to='base_link'>
+      <pose>0.193 0 0.25 0 -0 0</pose>
+    </frame>
+    <frame name='front_sonar' attached_to='base_front_joint'/>
+    <frame name='base_front_left_hub_joint' attached_to='p3at_front_left_axle'>
+      <pose>0 0.041 0 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_front_left_hub' attached_to='base_front_left_hub_joint'/>
+    <frame name='base_front_left_axle_joint' attached_to='base_link'>
+      <pose>0.135 0.156 0.111 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_front_left_axle' attached_to='base_front_left_axle_joint'/>
+    <frame name='base_front_right_hub_joint' attached_to='p3at_front_right_axle'>
+      <pose>0 -0.041 0 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_front_right_hub' attached_to='base_front_right_hub_joint'/>
+    <frame name='base_front_right_axle_joint' attached_to='base_link'>
+      <pose>0.135 -0.156 0.111 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_front_right_axle' attached_to='base_front_right_axle_joint'/>
+    <frame name='base_top_joint' attached_to='base_link'>
+      <pose>0.003 0 0.274 0 -0 0</pose>
+    </frame>
+    <frame name='top_plate' attached_to='base_top_joint'/>
+    <frame name='p3at_back_left_hub_joint' attached_to='p3at_back_left_axle'>
+      <pose>-0 0.041 0 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_back_left_hub' attached_to='p3at_back_left_hub_joint'/>
+    <frame name='bp3at_back_left_axle_joint' attached_to='base_link'>
+      <pose>-0.134 0.156 0.111 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_back_left_axle' attached_to='bp3at_back_left_axle_joint'/>
+    <frame name='p3at_back_right_hub_joint' attached_to='p3at_back_right_axle'>
+      <pose>-0 -0.041 0 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_back_right_hub' attached_to='p3at_back_right_hub_joint'/>
+    <static>0</static>
+    <frame name='bp3at_back_right_axle_joint' attached_to='base_link'>
+      <pose>-0.134 -0.156 0.111 0 -0 0</pose>
+    </frame>
+    <frame name='p3at_back_right_axle' attached_to='bp3at_back_right_axle_joint'/>
+  </model>
+</sdf>

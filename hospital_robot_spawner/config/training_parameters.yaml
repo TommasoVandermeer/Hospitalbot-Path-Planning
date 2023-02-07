@@ -1,0 +1,3 @@
+hospitalbot_training:
+  ros__parameters:
+    test: 1

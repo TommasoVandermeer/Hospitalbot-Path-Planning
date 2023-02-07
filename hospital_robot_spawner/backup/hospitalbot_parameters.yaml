@@ -1,0 +1,16 @@
+global_parameters:
+  ros__parameters:
+    # Location of the target that the agent has to reach ([x,y]: list of floats)
+    target_location: [0, 5]
+    # Position of the agent at the beginning of each episode ([x,y]: list of floats)
+    agent_initial_location: [0, 16]
+    # Linear velocity used for the actions (float)
+    agent_linear_velocity: 1
+    # Angular velocity used for the actions (float)
+    agent_angular_velocity: 1
+    # Time the action is applied to the agent (float)
+    action_time: 0.1
+    # Min distance from target for which the episode is concluded with success (float)
+    min_target_distance: 0.5
+    # Min distance from an obstacle for which the episode is concluded without success (float)
+    min_obstacles_distance: 0.1

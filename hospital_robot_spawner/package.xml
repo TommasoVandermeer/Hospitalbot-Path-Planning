@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>hospital_robot_spawner</name>
+  <version>0.0.0</version>
+  <description>This package creates a simulation in Gazebo which includes a differential drive robot with Lidar and a Hospital world</description>
+  <maintainer email="tommaso.vandermeer@student.unisi.it">Tommaso Van Der Meer</maintainer>
+  <license>I am a student, I dont know what to put here :)</license>
+
+  <depend>rclpy</depend>
+  <depend>os</depend>
+  <depend>sys</depend>
+  <depend>glob</depend>
+  <depend>setuptools</depend>
+  <depend>launch</depend>
+  <depend>ament_index_python</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>gazebo_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>functools</depend>
+  <depend>gym</depend>
+  <depend>numpy</depend>
+  <depend>stable_baselines3</depend>
+  <depend>math</depend>
+  <depend>subprocess</depend>
+  <depend>optuna</depend>
+
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
