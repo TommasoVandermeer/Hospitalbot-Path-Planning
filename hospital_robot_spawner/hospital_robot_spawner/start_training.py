@@ -54,8 +54,8 @@ def main(args=None):
 
     node.get_logger().info("The environment has been registered")
 
-    env = NormalizeReward(gym.make('HospitalBotEnv-v0'))
-    episodes = 10
+    #env = NormalizeReward(gym.make('HospitalBotEnv-v0'))
+    env = gym.make('HospitalBotEnv-v0')
 
     # Sample Observation and Action space for Debugging
     #node.get_logger().info("Observ sample: " + str(env.observation_space.sample()))
@@ -70,6 +70,8 @@ def main(args=None):
     eval_callback = EvalCallback(env, callback_on_new_best=stop_callback, eval_freq=50000, best_model_save_path=trained_models_dir)
     
     if node._training_mode == "random_agent":
+        # N° Episodes
+        episodes = 10
         ## Execute a random agent
         node.get_logger().info("Starting the RANDOM AGENT now")
         for ep in range(episodes):
