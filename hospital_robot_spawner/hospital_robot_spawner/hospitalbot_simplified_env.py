@@ -6,7 +6,7 @@ from hospital_robot_spawner.robot_controller import RobotController
 import math
 #from rcl_interfaces.srv import GetParameters
 
-class HospitalBotEnv(RobotController, Env):
+class HospitalBotSimpleEnv(RobotController, Env):
     """
     This class defines the RL environment. Here are defined:
         - Action space
@@ -39,27 +39,17 @@ class HospitalBotEnv(RobotController, Env):
         # ENVIRONMENT PARAMETERS
         self.robot_name = 'HospitalBot'
         # Initializes the Target location
-        self._target_location = np.array([1, 10], dtype=np.float32) # Training [1, 10]
+        self._target_location = np.array([1, 12], dtype=np.float32) # Training [1, 12]
         # If True, at each episode, the target location is set randomly, otherwise it is fixed
-        self._randomize_target = True
+        self._randomize_target = False
         # Initializes the linear velocity used in actions
-        self._linear_velocity = 1.5
+        self._linear_velocity = 1
         # Initializes the angular velocity used in actions
-        self._angular_velocity = 1.5
+        self._angular_velocity = 1
         # Initializes the min distance from target for which the episode is concluded with success
-        self._minimum_dist_from_target = 0.5
-        # Initializes the min distance from an obstacle for which the episode is concluded without success
-        self._minimum_dist_from_obstacles = 0.35
-        # Chooses the reward method to use - heuristic, adaptive heuristic (Checkout the method compute_reward)
-        self._reward_method = "adaptive heuristic"
-        # Attraction threshold and factor for adaptive heuristic
-        self._attraction_threshold = 3
-        self._attraction_factor = 1
-        # Repulsion threshold and factor for adaptive heuristic
-        self._repulsion_threshold = 1
-        self._repulsion_factor = 0.1
-        # Distance penalty factor
-        self._distance_penalty_factor = 1
+        self._minimum_dist_from_target = 0.3
+        # Initializes the radius from the target where the robot can navigate
+        self._target_range = 3.5
 
         # Initialize step count
         self._num_steps = 0
@@ -70,21 +60,14 @@ class HospitalBotEnv(RobotController, Env):
         self.get_logger().info("LINEAR VEL: " + str(self._linear_velocity))
         self.get_logger().info("ANGULAR VEL: " + str(self._angular_velocity))
         self.get_logger().info("MIN TARGET DIST: " + str(self._minimum_dist_from_target))
-        self.get_logger().info("MIN OBSTACLE DIST: " + str(self._minimum_dist_from_obstacles))
+        self.get_logger().info("TARGET RANGE: " + str(self._target_range))
 
         # Action space - It is a 2D continuous space - Linear velocity, Angular velocity
         self.action_space = Box(low=np.array([0, -self._angular_velocity]), high=np.array([self._linear_velocity, self._angular_velocity]), dtype=np.float32)
 
-        # State space - dictionary with: "Robot position", "Laser reads"
-        self.observation_space = Dict(
-            {
-                # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
-                #"agent": Box(low=np.array([-12, -35]), high=np.array([12, 21]), dtype=np.float32),
-                "agent": Box(low=np.array([-100, -math.pi]), high=np.array([100, math.pi]), dtype=np.float32),
-                # Laser reads are 61 and can range from 0.08 to inf
-                "laser": Box(low=0, high=np.inf, shape=(61,), dtype=np.float32),
-            }
-        )
+        # State space - Polar cordinates of the target in the robot coordinates system
+        # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
+        self.observation_space = Box(low=np.array([-100, -math.pi]), high=np.array([100, math.pi]), dtype=np.float32)
 
     def step(self, action):
 
@@ -97,7 +80,6 @@ class HospitalBotEnv(RobotController, Env):
 
         # Spin the node until laser reads and agent location are updated - VERY IMPORTANT
         self._previous_agent_location = self._agent_location
-        self._previous_laser_reads = self._laser_reads
         self.spin()
 
         # Compute the polar coordinates of the robot with respect to the target
@@ -109,7 +91,7 @@ class HospitalBotEnv(RobotController, Env):
         # Update distance from target
         info = self._get_info()
         # Check if episode is terminated
-        done = (info["distance"] < self._minimum_dist_from_target) or (any(observation["laser"] < self._minimum_dist_from_obstacles))
+        done = (info["distance"] < self._minimum_dist_from_target) or (info["distance"] > self._target_range)
         #self.get_logger().info("Done: " + str(done))
 
         # Compute Reward
@@ -143,13 +125,11 @@ class HospitalBotEnv(RobotController, Env):
 
         # Compute the initial observation
         self._previous_agent_location = self._agent_location
-        self._previous_laser_reads = self._laser_reads
         self.spin()
         self.transform_coordinates()
 
         # Updates state and additional infos
         observation = self._get_obs()
-        info = self._get_info()
 
         # Reset the number of steps
         self._num_steps = 0
@@ -162,7 +142,7 @@ class HospitalBotEnv(RobotController, Env):
     def _get_obs(self):
         # Returns the current state of the system
         #self.get_logger().info("Agent Location: " + str(self._agent_location))
-        return {"agent": self._polar_coordinates, "laser": self._laser_reads}
+        return self._polar_coordinates
 
     def _get_info(self):
         # returns the distance from agent to target
@@ -172,7 +152,7 @@ class HospitalBotEnv(RobotController, Env):
 
     def spin(self):
         # This function spins the node until it gets new sensor data (executes both laser and odom callbacks)
-        while np.array_equal(self._laser_reads, self._previous_laser_reads) or np.array_equal(self._agent_location, self._previous_agent_location):
+        while np.array_equal(self._agent_location, self._previous_agent_location):
             rclpy.spin_once(self)
 
     def transform_coordinates(self):
@@ -206,50 +186,12 @@ class HospitalBotEnv(RobotController, Env):
 
     def compute_rewards(self, observation, info):
         # This method computes the reward of the step
-
-        ## Heuristic reward
-        if self._reward_method == "heuristic":
-            if (info["distance"] < self._minimum_dist_from_target):
-                # If the agent reached the target it gets a positive reward
-                reward = 0
-                self.get_logger().info("TARGET REACHED")
-                #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
-            elif (any(observation["laser"] < self._minimum_dist_from_obstacles)):
-                # If the agent hits an abstacle it gets a negative reward
-                reward = -1000
-                self.get_logger().info("HIT AN OBSTACLE")
-            else:
-                # Otherwise the episode continues
-                reward = -1
-
-        ## Heuristic with Adaptive Exploration Strategy
-        elif self._reward_method == "adaptive heuristic":
-            if (info["distance"] < self._minimum_dist_from_target):
-                # If the agent reached the target it gets a positive reward minus the time it spent to reach it
-                reward = 1000 - self._num_steps
-                self.get_logger().info("TARGET REACHED")
-                #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
-            elif (any(observation["laser"] < self._minimum_dist_from_obstacles)):
-                # If the agent hits an abstacle it gets a negative reward
-                reward = -10000
-                self.get_logger().info("HIT AN OBSTACLE")
-            else:
-                # Otherwise the episode continues
-                ## Instant reward of the current state - euclidean distance
-                instant_reward = -info["distance"] * self._distance_penalty_factor
-
-                ## Estimated reward of the current state (attraction-repulsion rule)
-                # Attraction factor - Activates when the agent is near the target
-                if info["distance"] < self._attraction_threshold:
-                    attraction_reward = self._attraction_factor / info["distance"]
-                else:
-                    attraction_reward = 0
-                # Repulsion factor - Activates when the agent is near any obstacles
-                contributions = [((-self._repulsion_factor / read**2)*((1/read) - (1/self._repulsion_threshold))) \
-                     for read in observation["laser"] if read<=self._repulsion_threshold]
-                repulsion_reward = sum(contributions)
-                # Compute final reward - Min between this and +1 to creating a higher reward than reaching the target
-                reward = min(instant_reward + attraction_reward + repulsion_reward,1)
+        if (info["distance"] < self._minimum_dist_from_target):
+            # If the agent reached the target it gets a positive reward
+            reward = 1
+            self.get_logger().info("TARGET REACHED")
+        else:
+            reward = 0
             
         return reward
 

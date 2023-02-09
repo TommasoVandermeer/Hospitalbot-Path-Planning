@@ -15,6 +15,11 @@ class ResetNode(Node):
         self.get_logger().info("The reset node has just been created")
         self.robot_name = "HospitalBot"
 
+        # Set base robot position
+        self.robot_initial_x = 1
+        self.robot_initial_y = 14.5
+        self.robot_initial_orientation = -90
+
         self.reset_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback)
 
     def reset_environment_callback(self, request, response):
@@ -23,9 +28,9 @@ class ResetNode(Node):
 
         ## Now, using a python subprocess, we set the semi-random initial position
         # Set the semi-random initial position
-        position_x = float(1) + float(np.random.rand(1)*2-1)
-        position_y = float(16) + float(np.random.rand(1) - 0.5)
-        desired_angle = float(math.radians(-90) + math.radians(np.random.rand(1)*60-30))
+        position_x = float(self.robot_initial_x) + float(np.random.rand(1)*2-1) # Random contribution [-1,1]
+        position_y = float(self.robot_initial_y) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
+        desired_angle = float(math.radians(self.robot_initial_orientation) + math.radians(np.random.rand(1)*60-30)) # Random contribution [-30,+30]
         orientation_z = float(math.sin(desired_angle/2))
         orientation_w = float(math.cos(desired_angle/2))
         position = f'{{x: {str(position_x)}, y: {str(position_y)}, z: 0}}'

@@ -4,6 +4,7 @@ import rclpy
 from rclpy.node import Node
 from gym.envs.registration import register
 from hospital_robot_spawner.hospitalbot_env import HospitalBotEnv
+from hospital_robot_spawner.hospitalbot_simplified_env import HospitalBotSimpleEnv
 import gym
 from stable_baselines3 import A2C, PPO, DQN, DDPG
 from stable_baselines3.common.env_checker import check_env
@@ -19,7 +20,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which method for training "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "hyperparam_tuning"
+        self._training_mode = "training"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -33,7 +34,7 @@ def main(args=None):
     node.get_logger().info("Training node has been created")
 
     # Create the dir where the trained RL models will be saved
-    pkg_dir = '/home/tommaso/ros2_ws/src/hospital_robot_spawner'
+    pkg_dir = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
     trained_models_dir = os.path.join(pkg_dir, 'rl_models')
     log_dir = os.path.join(pkg_dir, 'logs')
     
@@ -46,8 +47,9 @@ def main(args=None):
     # First we register the gym environment created in hospitalbot_env module
     register(
         id="HospitalBotEnv-v0",
-        entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
-        max_episode_steps=100,
+        #entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
+        entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
+        max_episode_steps=1000,
     )
 
     node.get_logger().info("The environment has been registered")
@@ -75,16 +77,16 @@ def main(args=None):
             done = False
             while not done:
                 obs, reward, done, info = env.step(env.action_space.sample())
-                node.get_logger().info("Polar coordinates: " + str(obs["agent"]))
-                node.get_logger().info("Reward at step " + ": " + str(reward))
+                #node.get_logger().info("State: " + str(obs))
+                #node.get_logger().info("Reward at step " + ": " + str(reward))
     
     elif node._training_mode == "training":
         ## Train the model
-        model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir)
+        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
         # Execute training
-        model.learn(total_timesteps=int(2000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_100TS_LR3-3_2000000_adaptive_rand_targ")
+        model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_simplified_env_1000TS_0")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_100TS_LR3-3_2000000_adaptive_rand_targ")
+        model.save(f"{trained_models_dir}/PPO_simplified_env_1000TS_0")
     
     elif node._training_mode == "retraining":
         ## Re-train an existent model
