@@ -147,7 +147,8 @@ class HospitalBotSimpleEnv(RobotController, Env):
     def _get_info(self):
         # returns the distance from agent to target
         return {
-            "distance": math.dist(self._agent_location, self._target_location)
+            "distance": math.dist(self._agent_location, self._target_location),
+            "angle": self._polar_coordinates[1]
         }
 
     def spin(self):

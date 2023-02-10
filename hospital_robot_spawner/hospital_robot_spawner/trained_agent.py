@@ -22,14 +22,14 @@ def main(args=None):
 
     # We get the dir where the models are saved
     pkg_dir = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_simplified_env_1000TS.zip')
+    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'best_model.zip')
 
     # Register the gym environment
     register(
         id="HospitalBotEnv-v0",
-        #entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
-        entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
-        max_episode_steps=1000,
+        entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
+        #entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
+        max_episode_steps=300,
     )
 
     env = gym.make('HospitalBotEnv-v0')

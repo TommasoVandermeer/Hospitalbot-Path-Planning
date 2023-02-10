@@ -16,8 +16,8 @@ class ResetNode(Node):
         self.robot_name = "HospitalBot"
 
         # Set base robot position
-        self.robot_initial_x = 1
-        self.robot_initial_y = 14.5
+        self.robot_initial_x = 1 # For simplified env is 1
+        self.robot_initial_y = 16 # For simplified env is 14.5
         self.robot_initial_orientation = -90
 
         self.reset_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback)

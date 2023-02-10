@@ -47,9 +47,9 @@ def main(args=None):
     # First we register the gym environment created in hospitalbot_env module
     register(
         id="HospitalBotEnv-v0",
-        #entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
-        entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
-        max_episode_steps=1000,
+        entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
+        #entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
+        max_episode_steps=300,
     )
 
     node.get_logger().info("The environment has been registered")
@@ -67,7 +67,7 @@ def main(args=None):
 
     # Now we create two callbacks which will be executed during training
     stop_callback = StopTrainingOnRewardThreshold(reward_threshold=900, verbose=1)
-    eval_callback = EvalCallback(env, callback_on_new_best=stop_callback, eval_freq=50000, best_model_save_path=trained_models_dir)
+    eval_callback = EvalCallback(env, callback_on_new_best=stop_callback, eval_freq=25000, best_model_save_path=trained_models_dir)
     
     if node._training_mode == "random_agent":
         # N° Episodes
@@ -79,16 +79,16 @@ def main(args=None):
             done = False
             while not done:
                 obs, reward, done, info = env.step(env.action_space.sample())
-                #node.get_logger().info("State: " + str(obs))
-                #node.get_logger().info("Reward at step " + ": " + str(reward))
+                node.get_logger().info("Agent state: [" + str(info["distance"]) + ", " + str(info["angle"]) + "]")
+                node.get_logger().info("Reward at step " + ": " + str(reward))
     
     elif node._training_mode == "training":
         ## Train the model
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
+        model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir)
         # Execute training
-        model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_simplified_env_1000TS_0")
+        model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_simplified_env_1000TS_0")
+        model.save(f"{trained_models_dir}/PPO_normalized_env")
     
     elif node._training_mode == "retraining":
         ## Re-train an existent model

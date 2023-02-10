@@ -76,8 +76,8 @@ class RobotController(Node):
     # Method that saves the laser reads each time the topic /demo/laser/out receives a new message
     def laser_callback(self, msg: LaserScan):
         self._laser_reads = np.array(msg.ranges)
-        # Converts inf values to 20
-        self._laser_reads[self._laser_reads == np.inf] = np.float32(20)
+        # Converts inf values to 10
+        self._laser_reads[self._laser_reads == np.inf] = np.float32(10)
         #self.get_logger().info("Min Laser Read: " + str(min(self._laser_reads)))
 
     # Method to reset the simulation (calls the service /reset_simulation)

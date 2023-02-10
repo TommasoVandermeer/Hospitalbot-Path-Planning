@@ -41,17 +41,19 @@ class HospitalBotEnv(RobotController, Env):
         # Initializes the Target location
         self._target_location = np.array([1, 10], dtype=np.float32) # Training [1, 10]
         # If True, at each episode, the target location is set randomly, otherwise it is fixed
-        self._randomize_target = True
+        self._randomize_target = False
+        # If True, the observation space is normalized
+        self._normalize_obs = True
+        # Chooses the reward method to use - simple reward, heuristic, adaptive heuristic (Checkout the method compute_reward)
+        self._reward_method = "simple reward"
         # Initializes the linear velocity used in actions
-        self._linear_velocity = 1.5
+        self._linear_velocity = 1
         # Initializes the angular velocity used in actions
-        self._angular_velocity = 1.5
+        self._angular_velocity = 1
         # Initializes the min distance from target for which the episode is concluded with success
-        self._minimum_dist_from_target = 0.5
+        self._minimum_dist_from_target = 0.35
         # Initializes the min distance from an obstacle for which the episode is concluded without success
         self._minimum_dist_from_obstacles = 0.35
-        # Chooses the reward method to use - heuristic, adaptive heuristic (Checkout the method compute_reward)
-        self._reward_method = "adaptive heuristic"
         # Attraction threshold and factor for adaptive heuristic
         self._attraction_threshold = 3
         self._attraction_factor = 1
@@ -73,18 +75,30 @@ class HospitalBotEnv(RobotController, Env):
         self.get_logger().info("MIN OBSTACLE DIST: " + str(self._minimum_dist_from_obstacles))
 
         # Action space - It is a 2D continuous space - Linear velocity, Angular velocity
-        self.action_space = Box(low=np.array([0, -self._angular_velocity]), high=np.array([self._linear_velocity, self._angular_velocity]), dtype=np.float32)
+        self.action_space = Box(low=np.array([0.2, -self._angular_velocity]), high=np.array([self._linear_velocity, self._angular_velocity]), dtype=np.float32)
 
-        # State space - dictionary with: "Robot position", "Laser reads"
-        self.observation_space = Dict(
-            {
-                # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
-                #"agent": Box(low=np.array([-12, -35]), high=np.array([12, 21]), dtype=np.float32),
-                "agent": Box(low=np.array([-100, -math.pi]), high=np.array([100, math.pi]), dtype=np.float32),
-                # Laser reads are 61 and can range from 0.08 to inf
-                "laser": Box(low=0, high=np.inf, shape=(61,), dtype=np.float32),
-            }
-        )
+        if self._normalize_obs == True:
+            ## Normalized state space - dictionary with: "Robot position", "Laser reads"
+            self.observation_space = Dict(
+                {
+                    # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
+                    "agent": Box(low=np.array([-1, -1]), high=np.array([1, 1]), dtype=np.float32),
+                    # Laser reads are 61 and can range from 0.08 to 10
+                    "laser": Box(low=-1, high=1, shape=(61,), dtype=np.float32),
+                }
+            )
+
+        else:
+            ## State space - dictionary with: "Robot position", "Laser reads"
+            self.observation_space = Dict(
+                {
+                    # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
+                    #"agent": Box(low=np.array([-12, -35]), high=np.array([12, 21]), dtype=np.float32),
+                    "agent": Box(low=np.array([0, -math.pi]), high=np.array([60, math.pi]), dtype=np.float32),
+                    # Laser reads are 61 and can range from 0.08 to 10
+                    "laser": Box(low=0, high=np.inf, shape=(61,), dtype=np.float32),
+                }
+            )
 
     def step(self, action):
 
@@ -109,7 +123,7 @@ class HospitalBotEnv(RobotController, Env):
         # Update distance from target
         info = self._get_info()
         # Check if episode is terminated
-        done = (info["distance"] < self._minimum_dist_from_target) or (any(observation["laser"] < self._minimum_dist_from_obstacles))
+        done = (info["distance"] < self._minimum_dist_from_target) or (any(info["laser"] < self._minimum_dist_from_obstacles))
         #self.get_logger().info("Done: " + str(done))
 
         # Compute Reward
@@ -137,7 +151,7 @@ class HospitalBotEnv(RobotController, Env):
         while self._done_reset_env == False:
             rclpy.spin_once(self)
 
-        # Randomize target location+
+        # Randomize target location
         if self._randomize_target == True:
             self.randomize_target_location()
 
@@ -161,13 +175,19 @@ class HospitalBotEnv(RobotController, Env):
 
     def _get_obs(self):
         # Returns the current state of the system
+        obs = {"agent": self._polar_coordinates, "laser": self._laser_reads}
+        # Normalize observations
+        if self._normalize_obs == True:
+            obs = self.normalize_observation(obs)
         #self.get_logger().info("Agent Location: " + str(self._agent_location))
-        return {"agent": self._polar_coordinates, "laser": self._laser_reads}
+        return obs
 
     def _get_info(self):
-        # returns the distance from agent to target
+        # returns the distance from agent to target and laser reads
         return {
-            "distance": math.dist(self._agent_location, self._target_location)
+            "distance": math.dist(self._agent_location, self._target_location),
+            "laser": self._laser_reads,
+            "angle": self._polar_coordinates[1]
         }
 
     def spin(self):
@@ -214,7 +234,7 @@ class HospitalBotEnv(RobotController, Env):
                 reward = 0
                 self.get_logger().info("TARGET REACHED")
                 #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
-            elif (any(observation["laser"] < self._minimum_dist_from_obstacles)):
+            elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
                 # If the agent hits an abstacle it gets a negative reward
                 reward = -1000
                 self.get_logger().info("HIT AN OBSTACLE")
@@ -229,7 +249,7 @@ class HospitalBotEnv(RobotController, Env):
                 reward = 1000 - self._num_steps
                 self.get_logger().info("TARGET REACHED")
                 #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
-            elif (any(observation["laser"] < self._minimum_dist_from_obstacles)):
+            elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
                 # If the agent hits an abstacle it gets a negative reward
                 reward = -10000
                 self.get_logger().info("HIT AN OBSTACLE")
@@ -246,20 +266,50 @@ class HospitalBotEnv(RobotController, Env):
                     attraction_reward = 0
                 # Repulsion factor - Activates when the agent is near any obstacles
                 contributions = [((-self._repulsion_factor / read**2)*((1/read) - (1/self._repulsion_threshold))) \
-                     for read in observation["laser"] if read<=self._repulsion_threshold]
+                     for read in info["laser"] if read<=self._repulsion_threshold]
                 repulsion_reward = sum(contributions)
                 # Compute final reward - Min between this and +1 to creating a higher reward than reaching the target
                 reward = min(instant_reward + attraction_reward + repulsion_reward,1)
+
+        ## Simple reward
+        elif self._reward_method == "simple reward":
+            if (info["distance"] < self._minimum_dist_from_target):
+                # If the agent reached the target it gets a positive reward
+                reward = 1
+                self.get_logger().info("TARGET REACHED")
+                #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
+            elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
+                # If the agent hits an abstacle it gets a negative reward
+                reward = -1
+                self.get_logger().info("HIT AN OBSTACLE")
+            else:
+                # Otherwise the episode continues
+                reward = 0
             
         return reward
 
     def randomize_target_location(self):
         ## This method sets the target location at a semi-random position
         self._target_location = np.array([1, 10], dtype=np.float32) 
-        self._target_location[0] += np.float32(np.random.rand(1)*6-3)
-        self._target_location[1] += np.float32(np.random.rand(1)*4-1)
+        self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
+        self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target x ranges in [-1,+3]
         #self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
 
+    def normalize_observation(self, observation):
+        ## This method normalizes the observations taken from the robot in the range [0,1]
+        # Distance from target can range from 0 to 60 but we divide by ten since most times the agent never goes further
+        observation["agent"][0] = observation["agent"][0]/10
+        # Angle from target can range from -pi to pi
+        observation["agent"][1] = (observation["agent"][1] + math.pi)/(2*math.pi)
+        # Laser reads range from 0 to 10
+        observation["laser"] = observation["laser"]/10
+
+        # Debug
+        #self.get_logger().info("Agent: " + str(observation["agent"]))
+        #self.get_logger().info("Laser: " + str(observation["laser"]))
+        
+        return observation
+    
     def close(self):
         ## Shuts down the node to avoid creating multiple nodes on re-creation of the env
         self.destroy_client(self.client_sim)
