@@ -6,7 +6,7 @@ from std_srvs.srv import Empty
 from functools import partial
 import numpy as np
 import math
-from gazebo_msgs.srv import DeleteEntity, SpawnEntity
+from gazebo_msgs.srv import DeleteEntity, SpawnEntity, SetModelState
 import os
 from ament_index_python.packages import get_package_share_directory
 #from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
@@ -49,6 +49,8 @@ class RobotController(Node):
         self.client_sim = self.create_client(Empty, "/reset_simulation")
         # Reset environment client - this resets the robot to a random initial position
         self.client_env = self.create_client(Empty, "/reset_environment")
+        # Reset target client - this resets the target to the new position
+        self.client_target = self.create_client(SetModelState, "/reset_target")
         
         # Get the directory of the sdf of the robot
         self._pkg_dir = os.path.join(
@@ -99,7 +101,7 @@ class RobotController(Node):
         except Exception as e:
             self.get_logger().error("Service call failed: %r" % (e,))
 
-        # Method to reset the simulation (calls the service /reset_environment)
+    # Method to reset the simulation (calls the service /reset_environment)
     def call_reset_environment_service(self):
         while not self.client_env.wait_for_service(1.0):
             self.get_logger().warn("Waiting for service...")
@@ -109,12 +111,33 @@ class RobotController(Node):
         future = self.client_env.call_async(request)
         future.add_done_callback(partial(self.callback_reset_environment))
 
-    # Method that elaborates the future obtained by callig the /reset_environment service
+    # Method that elaborates the future obtained by callig the /reset_environment service - USED ONLY FOR VISUALIZATION
     def callback_reset_environment(self, future):
         try:
             response= future.result()
             #self.get_logger().info("The Environment has been successfully reset")
             self._done_reset_env = True
+        except Exception as e:
+            self.get_logger().error("Service call failed: %r" % (e,))
+
+    # Method to reset the target position (calls the service /reset_target) - USED ONLY FOR VISUALIZATION
+    def call_reset_target_service(self, position):
+        while not self.client_target.wait_for_service(1.0):
+            self.get_logger().warn("Waiting for service...")
+
+        request = SetModelState.Request()
+        request.model_state.model_name = "Target"
+        request.model_state.pose.position.x = float(position[0])
+        request.model_state.pose.position.y = float(position[1])
+
+        future = self.client_target.call_async(request)
+        future.add_done_callback(partial(self.callback_reset_target))
+
+    # Method that elaborates the future obtained by callig the /reset_target service
+    def callback_reset_target(self, future):
+        try:
+            response= future.result()
+            #self.get_logger().info("The Target has been successfully reset")
         except Exception as e:
             self.get_logger().error("Service call failed: %r" % (e,))
 

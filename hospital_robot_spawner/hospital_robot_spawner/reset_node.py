@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Empty
+from gazebo_msgs.srv import SetModelState
 import subprocess
 import numpy as np
 import math
@@ -20,10 +21,11 @@ class ResetNode(Node):
         self.robot_initial_y = 16 # For simplified env is 14.5
         self.robot_initial_orientation = -90
 
-        self.reset_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback)
+        self.reset_env_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback)
+        self.reset_target_srv = self.create_service(SetModelState, 'reset_target', self.reset_target_callback)
 
     def reset_environment_callback(self, request, response):
-        # This method has to be outside the env because otherwise it makes it crash
+        # This method has to be outside the gym env because otherwise it makes the simulation crash
         
         #self.get_logger().info("Incoming request")
 
@@ -42,6 +44,23 @@ class ResetNode(Node):
         result = subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], capture_output= True, close_fds=True)
         #self.get_logger().info("MSG: " + f"{msg}")
         #self.get_logger().info("Result: " + str(result))
+
+        return response
+
+    def reset_target_callback(self, request: SetModelState.Request, response: SetModelState.Response):
+        # Also this method has to be outside the gym env
+        name = request.model_state.model_name
+        position_x = request.model_state.pose.position.x
+        position_y = request.model_state.pose.position.y
+        position = f'{{x: {str(position_x)}, y: {str(position_y)}, z: 0.01}}'
+        orientation = f'{{x: 0, y: 0, z: 0, w: 0}}'
+        msg = f"name: '{name}', position: {position}, orientation: {orientation}"
+        # Cast the subprocess to call the gazebo service
+        result = subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], capture_output= True, close_fds=True)
+        #self.get_logger().info("MSG: " + f"{msg}")
+        #self.get_logger().info("Result: " + str(result))
+
+        response.success = True
 
         return response
 

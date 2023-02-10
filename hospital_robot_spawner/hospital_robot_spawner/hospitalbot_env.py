@@ -46,6 +46,8 @@ class HospitalBotEnv(RobotController, Env):
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
+        # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (this slows down the training)
+        self._visualize_target = True
         # Chooses the reward method to use - simple reward, heuristic, adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = "simple reward"
         # Initializes the maximal linear velocity used in actions
@@ -78,6 +80,10 @@ class HospitalBotEnv(RobotController, Env):
         self.get_logger().info("ANGULAR VEL: " + str(self._angular_velocity))
         self.get_logger().info("MIN TARGET DIST: " + str(self._minimum_dist_from_target))
         self.get_logger().info("MIN OBSTACLE DIST: " + str(self._minimum_dist_from_obstacles))
+
+        # Warning for training
+        if self._visualize_target == True:
+            self.get_logger().info("WARNING! TARGET VISUALIZATION IS ACTIVATED, SET IT FALSE FOR TRAINING")
 
         if self._normalize_act == True:
             ## Normalized Action space - It is a 2D continuous space - Linear velocity, Angular velocity
@@ -168,6 +174,10 @@ class HospitalBotEnv(RobotController, Env):
         # Randomize target location
         if self._randomize_target == True:
             self.randomize_target_location()
+
+        # Here we set the new target position for visualization
+        if self._visualize_target == True:
+            self.call_reset_target_service(self._target_location)
 
         # Compute the initial observation
         self._previous_agent_location = self._agent_location
