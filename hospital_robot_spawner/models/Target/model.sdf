@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <model name="ghost_sphere">
+    <link name="link">
+      <visual name='visual'>
+        <geometry>
+          <sphere>
+          <radius>0.2</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <diffuse>1 0 0 1</diffuse>
+          <ambient>1 0 0 1</ambient>
+        </material>
+      </visual>
+    </link>
+    <static>true</static>
+  </model>
+</sdf>

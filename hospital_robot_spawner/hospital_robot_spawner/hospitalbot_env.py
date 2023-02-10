@@ -51,7 +51,7 @@ class HospitalBotEnv(RobotController, Env):
         # Initializes the maximal linear velocity used in actions
         self._max_linear_velocity = 1
         # Initializes the minimal linear velocity used in actions
-        self._min_linear_velocity = 0.2
+        self._min_linear_velocity = 0
         # Initializes the angular velocity used in actions - This must always be symmetric (no need for max and min)
         self._angular_velocity = 1
         # Initializes the min distance from target for which the episode is concluded with success

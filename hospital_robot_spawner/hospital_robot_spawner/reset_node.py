@@ -23,6 +23,7 @@ class ResetNode(Node):
         self.reset_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback)
 
     def reset_environment_callback(self, request, response):
+        # This method has to be outside the env because otherwise it makes it crash
         
         #self.get_logger().info("Incoming request")
 

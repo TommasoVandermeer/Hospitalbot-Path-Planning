@@ -19,7 +19,7 @@ class TrainingNode(Node):
     def __init__(self):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
-        # Defines which method for training "random_agent", "training", "retraining" or "hyperparam_tuning"
+        # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
         self._training_mode = "random_agent"
 
         # Get training parameters from Yaml file
@@ -86,9 +86,9 @@ def main(args=None):
         ## Train the model
         model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir)
         # Execute training
-        model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env")
+        model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env2")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_normalized_env")
+        model.save(f"{trained_models_dir}/PPO_normalized_env2")
     
     elif node._training_mode == "retraining":
         ## Re-train an existent model

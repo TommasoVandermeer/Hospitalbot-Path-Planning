@@ -47,7 +47,7 @@ class RobotController(Node):
         self.laser_sub = self.create_subscription(LaserScan, '/demo/laser/out', self.laser_callback, 1)
         # Reset simulation client
         self.client_sim = self.create_client(Empty, "/reset_simulation")
-        # Reset environment client
+        # Reset environment client - this resets the robot to a random initial position
         self.client_env = self.create_client(Empty, "/reset_environment")
         
         # Get the directory of the sdf of the robot

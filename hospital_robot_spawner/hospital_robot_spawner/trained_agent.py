@@ -22,7 +22,7 @@ def main(args=None):
 
     # We get the dir where the models are saved
     pkg_dir = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_normalized_env.zip')
+    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_normalized_env2.zip')
 
     # Register the gym environment
     register(
@@ -47,7 +47,6 @@ def main(args=None):
     node.get_logger().info("Mean Reward: " + str(np.mean(Mean_ep_rew)) + " - Std Reward: " + str(np.std(Mean_ep_rew)))
     node.get_logger().info("Max Reward: " + str(np.max(Mean_ep_rew)) + " - Min Reward: " + str(np.min(Mean_ep_rew)))
     node.get_logger().info("Mean episode length: " + str(np.mean(Num_steps)))
-
 
     """# Run the trained agent
     for ep in range(episodes):

@@ -34,6 +34,12 @@ setup(
         # Path to the pioneer config file
         (os.path.join('share', package_name,'models/pioneer3at/'), glob('./models/pioneer3at/model.config')),
 
+        # Path to the target sdf file
+        (os.path.join('share', package_name,'models/Target/'), glob('./models/Target/model.sdf')),
+
+        # Path to the target config file
+        (os.path.join('share', package_name,'models/Target/'), glob('./models/Target/model.config')),
+
         # Path to the world file (i.e. warehouse + global environment)
         (os.path.join('share', package_name,'models/'), glob('./worlds/*')),
     ],
@@ -46,14 +52,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-          #'move_robot = hospital_robot_spawner.move_robot:main',
-          #'get_laser_reads = hospital_robot_spawner.get_laser_reads:main',
-          #'get_robot_pose = hospital_robot_spawner.get_robot_pose:main',
-          #'reset_simulation = hospital_robot_spawner.reset_simulation:main',
           'spawn_demo = hospital_robot_spawner.spawn_demo:main',
           'start_training = hospital_robot_spawner.start_training:main',
           'trained_agent = hospital_robot_spawner.trained_agent:main',
           'reset_node = hospital_robot_spawner.reset_node:main',
+          'spawn_target = hospital_robot_spawner.spawn_target:main',
         ],
     },
 )
