@@ -42,13 +42,17 @@ class HospitalBotEnv(RobotController, Env):
         self._target_location = np.array([1, 10], dtype=np.float32) # Training [1, 10]
         # If True, at each episode, the target location is set randomly, otherwise it is fixed
         self._randomize_target = False
-        # If True, the observation space is normalized
+        # If True, the observation space is normalized between [0,1]
         self._normalize_obs = True
+        # If True, the action space is normalized between [-1,1]
+        self._normalize_act = True
         # Chooses the reward method to use - simple reward, heuristic, adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = "simple reward"
-        # Initializes the linear velocity used in actions
-        self._linear_velocity = 1
-        # Initializes the angular velocity used in actions
+        # Initializes the maximal linear velocity used in actions
+        self._max_linear_velocity = 1
+        # Initializes the minimal linear velocity used in actions
+        self._min_linear_velocity = 0.2
+        # Initializes the angular velocity used in actions - This must always be symmetric (no need for max and min)
         self._angular_velocity = 1
         # Initializes the min distance from target for which the episode is concluded with success
         self._minimum_dist_from_target = 0.35
@@ -69,16 +73,22 @@ class HospitalBotEnv(RobotController, Env):
         # Debug prints on console
         self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
         self.get_logger().info("AGENT LOCATION: " + str(self._agent_location))
-        self.get_logger().info("LINEAR VEL: " + str(self._linear_velocity))
+        self.get_logger().info("MAX LINEAR VEL: " + str(self._max_linear_velocity))
+        self.get_logger().info("MIN LINEAR VEL: " + str(self._min_linear_velocity))
         self.get_logger().info("ANGULAR VEL: " + str(self._angular_velocity))
         self.get_logger().info("MIN TARGET DIST: " + str(self._minimum_dist_from_target))
         self.get_logger().info("MIN OBSTACLE DIST: " + str(self._minimum_dist_from_obstacles))
 
-        # Action space - It is a 2D continuous space - Linear velocity, Angular velocity
-        self.action_space = Box(low=np.array([0.2, -self._angular_velocity]), high=np.array([self._linear_velocity, self._angular_velocity]), dtype=np.float32)
+        if self._normalize_act == True:
+            ## Normalized Action space - It is a 2D continuous space - Linear velocity, Angular velocity
+            self.action_space = Box(low=np.array([-1, -1]), high=np.array([1, 1]), dtype=np.float32)
 
+        else:
+            ## Action space - It is a 2D continuous space - Linear velocity, Angular velocity
+            self.action_space = Box(low=np.array([self._min_linear_velocity, -self._angular_velocity]), high=np.array([self._max_linear_velocity, self._angular_velocity]), dtype=np.float32)
+        
         if self._normalize_obs == True:
-            ## Normalized state space - dictionary with: "Robot position", "Laser reads"
+            ## Normalized State space - dictionary with: "Robot position", "Laser reads"
             self.observation_space = Dict(
                 {
                     # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
@@ -104,6 +114,10 @@ class HospitalBotEnv(RobotController, Env):
 
         # Increase step number
         self._num_steps += 1
+
+        # De-normalize the action to send the command to robot
+        if self._normalize_act == True:
+            action = self.denormalize_action(action)
 
         # Apply the action
         #self.get_logger().info("Action applied: " + str(action))
@@ -309,6 +323,19 @@ class HospitalBotEnv(RobotController, Env):
         #self.get_logger().info("Laser: " + str(observation["laser"]))
         
         return observation
+
+    def denormalize_action(self, norm_act):
+        ## This method de-normalizes the action before sending it to the robot - The action is normalized between [-1,1]
+        # Linear velocity can also not be symmetric
+        action_linear = ((self._max_linear_velocity*(norm_act[0]+1)) + (self._min_linear_velocity*(1-norm_act[0])))/2
+        # Angular velicity is symmetric
+        action_angular = ((self._angular_velocity*(norm_act[1]+1)) + (-self._angular_velocity*(1-norm_act[1])))/2
+
+        # Debug
+        #self.get_logger().info("Linear velocity: " + str(action_linear))
+        #self.get_logger().info("Angular velocity: " + str(action_angular))
+
+        return np.array([action_linear, action_angular], dtype=np.float32)
     
     def close(self):
         ## Shuts down the node to avoid creating multiple nodes on re-creation of the env

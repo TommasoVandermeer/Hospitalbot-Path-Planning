@@ -20,7 +20,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which method for training "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "training"
+        self._training_mode = "random_agent"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
