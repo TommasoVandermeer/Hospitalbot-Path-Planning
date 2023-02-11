@@ -7,6 +7,7 @@ from hospital_robot_spawner.hospitalbot_env import HospitalBotEnv
 import gym
 from stable_baselines3 import A2C, PPO, DQN, DDPG
 from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.monitor import Monitor
 import os
 import numpy as np
 
@@ -22,7 +23,7 @@ def main(args=None):
 
     # We get the dir where the models are saved
     pkg_dir = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_normalized_env2.zip')
+    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_norm_generalized_env.zip')
 
     # Register the gym environment
     register(
@@ -33,7 +34,7 @@ def main(args=None):
     )
 
     env = gym.make('HospitalBotEnv-v0')
-    env.reset()
+    env = Monitor(env)
 
 
     episodes = 10

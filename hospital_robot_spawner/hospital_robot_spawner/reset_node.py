@@ -21,7 +21,7 @@ class ResetNode(Node):
         self.robot_initial_y = 16 # For simplified env is 14.5
         self.robot_initial_orientation = -90
 
-        self.reset_env_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback)
+        self.reset_env_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback, )
         self.reset_target_srv = self.create_service(SetModelState, 'reset_target', self.reset_target_callback)
 
     def reset_environment_callback(self, request, response):
@@ -41,9 +41,11 @@ class ResetNode(Node):
         msg = f"name: '{self.robot_name}', position: {position}, orientation: {orientation}"
         # Since it is easier I created a subprocess (terminal) where I publish on a gazebo topic
         # Otherwise it would have been necessary to create a Gazebo plugin to publish on the topic from Ros2
-        result = subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], capture_output= True, close_fds=True)
         #self.get_logger().info("MSG: " + f"{msg}")
-        #self.get_logger().info("Result: " + str(result))
+        try: 
+            subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], close_fds=True, timeout=10)
+        except Exception as e:
+            self.get_logger().error("Subprocess run failed: %r" % (e,))
 
         return response
 
@@ -56,12 +58,10 @@ class ResetNode(Node):
         orientation = f'{{x: 0, y: 0, z: 0, w: 0}}'
         msg = f"name: '{name}', position: {position}, orientation: {orientation}"
         # Cast the subprocess to call the gazebo service
-        result = subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], capture_output= True, close_fds=True)
         #self.get_logger().info("MSG: " + f"{msg}")
-        #self.get_logger().info("Result: " + str(result))
 
-        response.success = True
-
+        subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], close_fds=True)
+        
         return response
 
 def main(args=None):

@@ -1,6 +1,6 @@
 import rclpy
 from gym import Env
-from gym.spaces import Discrete, Dict, Box
+from gym.spaces import Dict, Box
 import numpy as np
 from hospital_robot_spawner.robot_controller import RobotController
 import math
@@ -41,13 +41,13 @@ class HospitalBotEnv(RobotController, Env):
         # Initializes the Target location
         self._target_location = np.array([1, 10], dtype=np.float32) # Training [1, 10]
         # If True, at each episode, the target location is set randomly, otherwise it is fixed
-        self._randomize_target = False
-        # If True, the observation space is normalized between [0,1]
+        self._randomize_target = True
+        # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (this slows down the training)
-        self._visualize_target = True
+        self._visualize_target = False
         # Chooses the reward method to use - simple reward, heuristic, adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = "simple reward"
         # Initializes the maximal linear velocity used in actions
@@ -98,9 +98,10 @@ class HospitalBotEnv(RobotController, Env):
             self.observation_space = Dict(
                 {
                     # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
-                    "agent": Box(low=np.array([-1, -1]), high=np.array([1, 1]), dtype=np.float32),
+                    # Maximum distance can be 6 but in 95% of cases it never goes over 10
+                    "agent": Box(low=np.array([0, 0]), high=np.array([6, 1]), dtype=np.float32),
                     # Laser reads are 61 and can range from 0.08 to 10
-                    "laser": Box(low=-1, high=1, shape=(61,), dtype=np.float32),
+                    "laser": Box(low=0, high=1, shape=(61,), dtype=np.float32),
                 }
             )
 
@@ -351,6 +352,7 @@ class HospitalBotEnv(RobotController, Env):
         ## Shuts down the node to avoid creating multiple nodes on re-creation of the env
         self.destroy_client(self.client_sim)
         self.destroy_client(self.client_env)
+        self.destroy_client(self.client_target)
         self.destroy_publisher(self.action_pub)
         self.destroy_subscription(self.pose_sub)
         self.destroy_subscription(self.laser_sub)

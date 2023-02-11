@@ -9,7 +9,6 @@ import gym
 from stable_baselines3 import A2C, PPO, DQN, DDPG
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
-from gym.wrappers import NormalizeReward
 import os
 import optuna
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -20,7 +19,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "random_agent"
+        self._training_mode = "retraining"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -86,22 +85,22 @@ def main(args=None):
         ## Train the model
         model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir)
         # Execute training
-        model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env2")
+        model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env_generalized")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_normalized_env2")
+        model.save(f"{trained_models_dir}/PPO_normalized_env_generalized")
     
     elif node._training_mode == "retraining":
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'best_model.zip')
+        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_norm_generalized_env.zip')
         # Here we load the rained model
         #custom_obs = {'learning_rate': 0.000003, 'ent_coef': 0.01}
         model = PPO.load(trained_model_path, env=env) #, custom_objects=custom_obs)
         # Execute training
-        model.learn(total_timesteps=int(2000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_100TS_LR3-5_2000000_adaptive_rand_targ")
+        model.learn(total_timesteps=int(10000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env_generalized")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_100TS_LR3-5_2000000_adaptive_rand_targ")
+        model.save(f"{trained_models_dir}/PPO_normalized_env_generalized")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment
@@ -109,7 +108,7 @@ def main(args=None):
         del env
         # Hyperparameter tuning using Optuna
         study = optuna.create_study(direction='maximize')
-        study.optimize(optimize_agent, n_trials=10, n_jobs=1)
+        study.optimize(optimize_agent, n_trials=20, n_jobs=1)
         # Print best params
         node.get_logger().info("Best Hyperparameters: " + str(study.best_params))
 
@@ -134,9 +133,9 @@ def optimize_agent(trial):
     ## This method is used to optimize the hyperparams for our problem
     try:
         # Create environment
-        env_opt = NormalizeReward(gym.make('HospitalBotEnv-v0'))
+        env_opt = gym.make('HospitalBotEnv-v0')
         # Setup dirs
-        PKG_DIR = '/home/tommaso/ros2_ws/src/hospital_robot_spawner'
+        PKG_DIR = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
         LOG_DIR = os.path.join(PKG_DIR, 'logs')
         SAVE_PATH = os.path.join(PKG_DIR, 'tuning', 'trial_{}_best_model'.format(trial.number))
         # Setup the parameters
