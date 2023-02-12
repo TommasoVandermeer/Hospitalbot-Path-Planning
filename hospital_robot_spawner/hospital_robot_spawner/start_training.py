@@ -19,7 +19,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "retraining"
+        self._training_mode = "hyperparam_tuning"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -93,14 +93,14 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_norm_generalized_env.zip')
+        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'trial_6_best_model.zip')
         # Here we load the rained model
         #custom_obs = {'learning_rate': 0.000003, 'ent_coef': 0.01}
         model = PPO.load(trained_model_path, env=env) #, custom_objects=custom_obs)
         # Execute training
-        model.learn(total_timesteps=int(10000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env_generalized")
+        model.learn(total_timesteps=int(10000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_norm_gen_TH")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_normalized_env_generalized")
+        model.save(f"{trained_models_dir}/PPO_norm_gen_TH")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment
@@ -120,13 +120,13 @@ def main(args=None):
 def optimize_ppo(trial):
     ## This method defines the range of hyperparams to search fo the best tuning
     return {
-        'n_steps': trial.suggest_int('n_steps', 2048, 8192),
-        'gamma': trial.suggest_loguniform('gamma', 0.8, 0.9999),
-        'learning_rate': trial.suggest_loguniform('learning_rate', 1e-6, 1e-3),
-        'clip_range': trial.suggest_uniform('clip_range', 0.1, 0.4),
-        'gae_lambda': trial.suggest_uniform('gae_lambda', 0.8, 0.99),
-        'ent_coef': trial.suggest_loguniform('ent_coef', 0.00000001, 0.1),
-        'vf_coef': trial.suggest_uniform('vf_coef', 0, 1),
+        'n_steps': trial.suggest_int('n_steps', 2048, 8192), # Default: 2048
+        'gamma': trial.suggest_loguniform('gamma', 0.8, 0.9999), # Default: 0.99
+        'learning_rate': trial.suggest_loguniform('learning_rate', 1e-6, 1e-3), # Default: 3e-4
+        'clip_range': trial.suggest_uniform('clip_range', 0.1, 0.4), # Default: 0.02
+        'gae_lambda': trial.suggest_uniform('gae_lambda', 0.8, 0.99), # Default: 0.95
+        'ent_coef': trial.suggest_loguniform('ent_coef', 0.00000001, 0.1), # Default: 0.0
+        'vf_coef': trial.suggest_uniform('vf_coef', 0, 1), # Default: 0.5
     }
 
 def optimize_agent(trial):
