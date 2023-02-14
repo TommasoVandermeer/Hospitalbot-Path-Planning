@@ -23,7 +23,7 @@ def main(args=None):
 
     # We get the dir where the models are saved
     pkg_dir = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_norm_generalized_env2.zip')
+    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_rand_targ_no_obstacles.zip')
 
     # Register the gym environment
     register(

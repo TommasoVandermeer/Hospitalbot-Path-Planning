@@ -47,7 +47,7 @@ class HospitalBotEnv(RobotController, Env):
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (this slows down the training)
-        self._visualize_target = False
+        self._visualize_target = True
         # Chooses the reward method to use - simple reward, heuristic, adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = "simple reward"
         # Initializes the maximal linear velocity used in actions
