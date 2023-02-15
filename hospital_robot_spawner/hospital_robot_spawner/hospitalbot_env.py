@@ -39,17 +39,19 @@ class HospitalBotEnv(RobotController, Env):
         # ENVIRONMENT PARAMETERS
         self.robot_name = 'HospitalBot'
         # Initializes the Target location
-        self._target_location = np.array([1, 10], dtype=np.float32) # Training [1, 10]
-        # If True, at each episode, the target location is set randomly, otherwise it is fixed
-        self._randomize_target = True
+        self._target_location = np.array([1, 10], dtype=np.float32) # Default is [1, 10]
+        # If True, the robot's initial position is randomized at each episode
+        self._randomize_robot_position = True
+        # 0: target location fixed, 1: target location semi-random but no obstacles, 2: target location semi-random with obstacles
+        self._randomize_target = 2
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
-        # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (this slows down the training)
-        self._visualize_target = True
-        # Chooses the reward method to use - simple reward, heuristic, adaptive heuristic (Checkout the method compute_reward)
-        self._reward_method = "simple reward"
+        # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
+        self._visualize_target = False
+        # 0: simple reward, 1: heuristic, 2: adaptive heuristic (Checkout the method compute_reward)
+        self._reward_method = 0
         # Initializes the maximal linear velocity used in actions
         self._max_linear_velocity = 1
         # Initializes the minimal linear velocity used in actions
@@ -60,6 +62,8 @@ class HospitalBotEnv(RobotController, Env):
         self._minimum_dist_from_target = 0.35
         # Initializes the min distance from an obstacle for which the episode is concluded without success
         self._minimum_dist_from_obstacles = 0.35
+        
+        ## Adaptive heuristic parameters
         # Attraction threshold and factor for adaptive heuristic
         self._attraction_threshold = 3
         self._attraction_factor = 1
@@ -141,19 +145,21 @@ class HospitalBotEnv(RobotController, Env):
         # Update robot location and laser reads
         observation = self._get_obs()
         #self.get_logger().info(str(observation["laser"]))
-        # Update distance from target
+        # Update infos
         info = self._get_info()
         # Check if episode is terminated
         done = (info["distance"] < self._minimum_dist_from_target) or (any(info["laser"] < self._minimum_dist_from_obstacles))
         #self.get_logger().info("Done: " + str(done))
 
         # Compute Reward
-        reward = self.compute_rewards(observation, info)
+        reward = self.compute_rewards(info)
 
         return observation, reward, done, info
 
     def render(self):
         # Function to render env steps
+        # Our env is always rendered if you start gazebo_world.launch.py
+        # If you don't want to see graphical output launch headless_world.launch.py, it is also much faster for training (>20 times faster)
         pass
 
     def reset(self, seed=None, options=None):
@@ -161,20 +167,26 @@ class HospitalBotEnv(RobotController, Env):
 
         # Reset the done reset variable
         self._done_reset_sim = False
-        self._done_reset_env = False
         # Calls the reset simulation service
         self.call_reset_simulation_service()
         # Here we spin the node until the /reset_simulation service responds, otherwise we get random observations
         while self._done_reset_sim == False:
             rclpy.spin_once(self)
-        self.call_reset_environment_service()
-        # Here we spin the node until the /reset_environment service responds, otherwise we get random observations
-        while self._done_reset_env == False:
-            rclpy.spin_once(self)
+
+        if self._randomize_robot_position == True:
+            # Reset the done reset variable
+            self._done_reset_env = False
+            # Calls the reset environment service (resets the robot's initial position as semi-random)
+            self.call_reset_environment_service()
+            # Here we spin the node until the /reset_environment service responds, otherwise we get random observations
+            while self._done_reset_env == False:
+                rclpy.spin_once(self)
 
         # Randomize target location
-        if self._randomize_target == True:
-            self.randomize_target_location()
+        if self._randomize_target == 1:
+            self.randomize_target_location_no_obstacles()
+        elif self._randomize_target == 2:
+            self.randomize_target_location_obstacles()
 
         # Here we set the new target position for visualization
         if self._visualize_target == True:
@@ -212,7 +224,7 @@ class HospitalBotEnv(RobotController, Env):
         return {
             "distance": math.dist(self._agent_location, self._target_location),
             "laser": self._laser_reads,
-            "angle": self._polar_coordinates[1]
+            "angle": self._theta
         }
 
     def spin(self):
@@ -249,11 +261,26 @@ class HospitalBotEnv(RobotController, Env):
         #self.get_logger().info("Xt: " + str(self._robot_target_x) + " - Yt: " + str(self._robot_target_y))
         #self.get_logger().info("Polar coordinates: " + str(self._polar_coordinates))
 
-    def compute_rewards(self, observation, info):
+    def compute_rewards(self, info):
         # This method computes the reward of the step
 
+        ## Simple reward
+        if self._reward_method == 0:
+            if (info["distance"] < self._minimum_dist_from_target):
+                # If the agent reached the target it gets a positive reward
+                reward = 1
+                self.get_logger().info("TARGET REACHED")
+                #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
+            elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
+                # If the agent hits an abstacle it gets a negative reward
+                reward = -1
+                self.get_logger().info("HIT AN OBSTACLE")
+            else:
+                # Otherwise the episode continues
+                reward = 0
+
         ## Heuristic reward
-        if self._reward_method == "heuristic":
+        elif self._reward_method == 1:
             if (info["distance"] < self._minimum_dist_from_target):
                 # If the agent reached the target it gets a positive reward
                 reward = 0
@@ -268,7 +295,7 @@ class HospitalBotEnv(RobotController, Env):
                 reward = -1
 
         ## Heuristic with Adaptive Exploration Strategy
-        elif self._reward_method == "adaptive heuristic":
+        elif self._reward_method == 2:
             if (info["distance"] < self._minimum_dist_from_target):
                 # If the agent reached the target it gets a positive reward minus the time it spent to reach it
                 reward = 1000 - self._num_steps
@@ -295,30 +322,55 @@ class HospitalBotEnv(RobotController, Env):
                 repulsion_reward = sum(contributions)
                 # Compute final reward - Min between this and +1 to creating a higher reward than reaching the target
                 reward = min(instant_reward + attraction_reward + repulsion_reward,1)
-
-        ## Simple reward
-        elif self._reward_method == "simple reward":
-            if (info["distance"] < self._minimum_dist_from_target):
-                # If the agent reached the target it gets a positive reward
-                reward = 1
-                self.get_logger().info("TARGET REACHED")
-                #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
-            elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
-                # If the agent hits an abstacle it gets a negative reward
-                reward = -1
-                self.get_logger().info("HIT AN OBSTACLE")
-            else:
-                # Otherwise the episode continues
-                reward = 0
             
         return reward
 
-    def randomize_target_location(self):
-        ## This method sets the target location at a semi-random position
-        self._target_location = np.array([1, 10], dtype=np.float32) 
+    def randomize_target_location_no_obstacles(self):
+        ## This method sets the target location at a semi-random position with no obstacles within robot and target
+        self._target_location = np.array([1, 10], dtype=np.float32) # Base position [1,10]
         self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
-        self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target x ranges in [-1,+3]
+        self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target y ranges in [-1,+3]
         #self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
+
+    def randomize_target_location_obstacles(self):
+        ## This method sets the target location at a semi-random position where there are obstacles in the path from robot to target
+        location = np.random.randint(0,6) # Gets an int from 0 to 4
+        # Location zero is on the left before the chairs
+        if location == 0:
+            # Center of the location
+            self._target_location = np.array([6.5, 11], dtype=np.float32)
+            self._target_location[0] += np.float32(np.random.rand(1)*3-1.5) # Random contr. on target x ranges in [-1.5,1.5]
+            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
+        # Location one is on the left after the chairs
+        elif location == 1:
+            # Center of the location
+            self._target_location = np.array([6, 5], dtype=np.float32)
+            self._target_location[0] += np.float32(np.random.rand(1)*4-2) # Random contr. on target x ranges in [-2,2]
+            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
+        # Location two is inside the reception (in the center)
+        elif location == 2:
+            # Center of the location
+            self._target_location = np.array([0, 2], dtype=np.float32)
+            self._target_location[0] += np.float32(np.random.rand(1)*4-2) # Random contr. on target x ranges in [-2,2]
+            self._target_location[1] += np.float32(np.random.rand(1)*2-1) # Random contr. on target y ranges in [-1,1]
+        # Location three is on the right after the chairs
+        elif location == 3:
+            # Center of the location
+            self._target_location = np.array([-6, 5], dtype=np.float32)
+            self._target_location[0] += np.float32(np.random.rand(1)*4-2) # Random contr. on target x ranges in [-2,2]
+            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
+        # Location four is on the right before the chairs
+        elif location == 4:
+            # Center of the location
+            self._target_location = np.array([-6.5, 11], dtype=np.float32)
+            self._target_location[0] += np.float32(np.random.rand(1)*3-1.5) # Random contr. on target x ranges in [-1.5,+1.5]
+            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
+        # Location five is in the center (no obstacles)
+        else:
+            # Center of the location
+            self._target_location = np.array([1, 10], dtype=np.float32) # Base position [1,10]
+            self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
+            self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target y ranges in [-1,+3]
 
     def normalize_observation(self, observation):
         ## This method normalizes the observations taken from the robot in the range [0,1]
