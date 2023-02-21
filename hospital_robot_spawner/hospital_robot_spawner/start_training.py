@@ -48,7 +48,7 @@ def main(args=None):
         id="HospitalBotEnv-v0",
         entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
         #entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
-        max_episode_steps=300,
+        max_episode_steps=1000,
     )
 
     node.get_logger().info("The environment has been registered")
@@ -96,18 +96,18 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'trial_6_trained2.zip')
+        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'trial_10.zip')
         # Here we load the rained model
         #custom_obs = {'learning_rate': 0.000003, 'ent_coef': 0.01}
         model = PPO.load(trained_model_path, env=env) #, custom_objects=custom_obs)
         # Execute training
         try:
-            model.learn(total_timesteps=int(1500000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_norm_gen_TH3")
+            model.learn(total_timesteps=int(3000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_rand_targ_with_obstacles")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_rand_targ_no_obstacles")
+            model.save(f"{trained_models_dir}/PPO_rand_targ_with_obstacles")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_rand_targ_no_obstacles")
+        model.save(f"{trained_models_dir}/PPO_rand_targ_with_obstacles")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment
@@ -144,7 +144,7 @@ def optimize_agent(trial):
         # Setup dirs
         PKG_DIR = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
         LOG_DIR = os.path.join(PKG_DIR, 'logs')
-        SAVE_PATH = os.path.join(PKG_DIR, 'tuning', 'trial_{}_best_model'.format(trial.number))
+        SAVE_PATH = os.path.join(PKG_DIR, 'tuning', 'trial_{}'.format(trial.number))
         # Setup the parameters
         model_params = optimize_ppo(trial)
         # Setup the model

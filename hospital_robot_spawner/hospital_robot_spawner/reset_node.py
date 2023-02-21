@@ -9,7 +9,7 @@ import math
 class ResetNode(Node):
     """
     This node is used to reset the simulation when the agent finishes its episode. It does one thing:
-    - Calls /gazebo/world/pose/modify topic (Gazebo topic) to set a semi-random initial position
+    - Calls /gazebo/world/pose/modify topic (Gazebo topic) to set a semi-random initial position (for robot or target)
     """
     def __init__(self):
         super().__init__('reset_node')
@@ -21,24 +21,23 @@ class ResetNode(Node):
         self.robot_initial_y = 16 # For simplified env is 14.5
         self.robot_initial_orientation = -90
 
-        self.reset_env_srv = self.create_service(Empty, 'reset_environment', self.reset_environment_callback, )
+        self.reset_env_srv = self.create_service(SetModelState, 'reset_robot', self.reset_robot_callback)
         self.reset_target_srv = self.create_service(SetModelState, 'reset_target', self.reset_target_callback)
 
-    def reset_environment_callback(self, request, response):
+    def reset_robot_callback(self, request: SetModelState.Request, response: SetModelState.Response):
         # This method has to be outside the gym env because otherwise it makes the simulation crash
         
         #self.get_logger().info("Incoming request")
-
+        name = request.model_state.model_name
         ## Now, using a python subprocess, we set the semi-random initial position
-        # Set the semi-random initial position
-        position_x = float(self.robot_initial_x) + float(np.random.rand(1)*2-1) # Random contribution [-1,1]
-        position_y = float(self.robot_initial_y) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
-        desired_angle = float(math.radians(self.robot_initial_orientation) + math.radians(np.random.rand(1)*60-30)) # Random contribution [-30,+30]
-        orientation_z = float(math.sin(desired_angle/2))
-        orientation_w = float(math.cos(desired_angle/2))
+        # Set position position
+        position_x = float(request.model_state.pose.position.x)
+        position_y = float(request.model_state.pose.position.y)
+        orientation_z = float(request.model_state.pose.orientation.z)
+        orientation_w = float(request.model_state.pose.orientation.w)
         position = f'{{x: {str(position_x)}, y: {str(position_y)}, z: 0}}'
         orientation = f'{{x: 0, y: 0, z: {str(orientation_z)}, w: {str(orientation_w)}}}'
-        msg = f"name: '{self.robot_name}', position: {position}, orientation: {orientation}"
+        msg = f"name: '{name}', position: {position}, orientation: {orientation}"
         # Since it is easier I created a subprocess (terminal) where I publish on a gazebo topic
         # Otherwise it would have been necessary to create a Gazebo plugin to publish on the topic from Ros2
         #self.get_logger().info("MSG: " + f"{msg}")

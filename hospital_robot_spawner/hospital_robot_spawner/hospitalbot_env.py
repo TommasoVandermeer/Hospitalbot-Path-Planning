@@ -28,7 +28,8 @@ class HospitalBotEnv(RobotController, Env):
     And the following methods (only the ones usefull here):
         - send_velocity_command: imposes a velocity to the agent (the robot)
         - call_reset_simulation_service: resets the simulation
-        - call_reset_environment_service: resets the robot position to a semi-random point
+        - call_reset_robot_service: resets the robot position to desired position
+        - call_reset_target_service: resets the target position to desired position
     """
     def __init__(self):
         
@@ -40,16 +41,20 @@ class HospitalBotEnv(RobotController, Env):
         self.robot_name = 'HospitalBot'
         # Initializes the Target location
         self._target_location = np.array([1, 10], dtype=np.float32) # Default is [1, 10]
-        # If True, the robot's initial position is randomized at each episode
-        self._randomize_robot_position = True
-        # 0: target location fixed, 1: target location semi-random but no obstacles, 2: target location semi-random with obstacles
-        self._randomize_target = 2
+        # Defines the level of randomization of the env, the more you randomize the more the model will be generalizable (no overfitting)
+        # 0: no randomization
+        # 1: semi-randomize only robot's initial position
+        # 2: semi-randomize only target location
+        # 3: semi-randomize both robot position and target location
+        # 3.5: door test randomization
+        # 4: max randomization (both target and robot are reset in many locations at each episode)
+        self._randomize_env_level = 3.5
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
-        self._visualize_target = False
+        self._visualize_target = True
         # 0: simple reward, 1: heuristic, 2: adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = 0
         # Initializes the maximal linear velocity used in actions
@@ -61,7 +66,7 @@ class HospitalBotEnv(RobotController, Env):
         # Initializes the min distance from target for which the episode is concluded with success
         self._minimum_dist_from_target = 0.35
         # Initializes the min distance from an obstacle for which the episode is concluded without success
-        self._minimum_dist_from_obstacles = 0.35
+        self._minimum_dist_from_obstacles = 0.27
         
         ## Adaptive heuristic parameters
         # Attraction threshold and factor for adaptive heuristic
@@ -120,6 +125,37 @@ class HospitalBotEnv(RobotController, Env):
                     "laser": Box(low=0, high=np.inf, shape=(61,), dtype=np.float32),
                 }
             )
+        
+        # This variable defines all the possible locations where the robot can spawn with a self._randomize_env_level of 4
+        # [x, y, angle, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound, angle_lowerbound, angle_upperbound]
+        # x, y and angle defines the center of the location and the orientation, the bounds define the limits from the center in which the robot will spawn
+        self.robot_locations = [[1, 16, -90, -1, 1, -0.5, 0.5, -30, 30],
+                          [11, 13, 180, -1, 1, -0.25, 0.25, -30, 30],
+                          [11.5, 5.7, 180,-0.2, 0.2, -0.1, 0.1, 0, 30],
+                          [7.7, -8, 90, -0.5, 0.5, -1.5, 1.5, -30, 30],
+                          [-2.3, -30.5, 90, -0.2, 0.5, -0.5, 1.5, -20, 45],
+                          [-7.7, -30.8, 90, -0.2, 0.2, -0.5, 1, -20, 20],
+                          [-2.1, -24.6, 180, -1, 1, -0.3, 0.3, -45, 30],
+                          [-5, -6.6, 90, -0.5, 0.5, -1, 1, -30, 30],
+                          [-5, 4, -90, -0.5, 0.5, -1, 1, -30, 30],
+                          [-3.6, 10.9, 180, -1, 1.5, -1, 1, -15, 45],
+                          [-1.6, -8.5, 0, -1, 1, -0.5, 0.5, -30, 30]]
+        
+        # This variable defines all the possible locations where the target can spawn with a self._randomize_env_level of 4
+        # Obviously these locations are striclty associated with the locations where the robot spawns
+        # [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
+        # x and y defines the center of the location, the bounds define the limits from the center in which the target will spawn
+        self.target_locations = [[1, 10, -3, 3, -1, 3],
+                          [6.7, 12, -0.1, 0.1, -2, 2],
+                          [7, 5, -1.5, 1.5, -0.5, 0.5],
+                          [10.8, -2.1, -1, 1, -0.1, 0.1],
+                          [4.3, -27.6, -2, 3, -0.5, 0.5],
+                          [-10.5, -26.3, -0.2, 1, -1, 1],
+                          [-5, -21, -1, 1, -2, 2],
+                          [-3.1, -3.5, -0.5, 0, -1, 1],
+                          [0, 2, -2, 2, -1, 1],
+                          [-7, 10.3, -0.5, 0.5, -0.5, 0.5],
+                          [3.3, -8.6, -0.5, 0.5, -0.5, 0.5]]
 
     def step(self, action):
 
@@ -173,20 +209,19 @@ class HospitalBotEnv(RobotController, Env):
         while self._done_reset_sim == False:
             rclpy.spin_once(self)
 
-        if self._randomize_robot_position == True:
+        if (self._randomize_env_level == 1) or (self._randomize_env_level >= 3):
             # Reset the done reset variable
             self._done_reset_env = False
-            # Calls the reset environment service (resets the robot's initial position as semi-random)
-            self.call_reset_environment_service()
+            # Get the new pose
+            pose2d = self.randomize_robot_location()
+            # Call the reset robot position service
+            self.call_reset_robot_service(pose2d)
             # Here we spin the node until the /reset_environment service responds, otherwise we get random observations
             while self._done_reset_env == False:
                 rclpy.spin_once(self)
-
-        # Randomize target location
-        if self._randomize_target == 1:
-            self.randomize_target_location_no_obstacles()
-        elif self._randomize_target == 2:
-            self.randomize_target_location_obstacles()
+        
+        if (self._randomize_env_level >= 2):
+            self.randomize_target_location()
 
         # Here we set the new target position for visualization
         if self._visualize_target == True:
@@ -261,6 +296,65 @@ class HospitalBotEnv(RobotController, Env):
         #self.get_logger().info("Xt: " + str(self._robot_target_x) + " - Yt: " + str(self._robot_target_y))
         #self.get_logger().info("Polar coordinates: " + str(self._polar_coordinates))
 
+    def randomize_target_location(self):
+        ## This method randomizes target position based on self._randomize_env_level (2, 3 or 4)
+        # Random Level 1 neve enters here - Target location is still
+
+        # RANDOM LEVEL 2 and 3
+        if (self._randomize_env_level == 2) or (self._randomize_env_level == 3):
+            self._target_location = np.array([1, 10], dtype=np.float32) # Base position [1,10]
+            self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
+            self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target y ranges in [-1,+3]
+            #self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
+
+        # RANDOM LEVEL 3.5 - Door test
+        if (self._randomize_env_level == 3.5):
+            self._target_location = np.array([6.45, 16.55], dtype=np.float32) # Base position
+            self._target_location[0] += np.float32(np.random.rand(1)*1.5-0.1) # Random contr. on target x 
+            self._target_location[1] += np.float32(np.random.rand(1)*1.5-1.5) # Random contr. on target y 
+        
+        # RANDOM LEVEL 4
+        if (self._randomize_env_level == 4):
+            # The location was already chosen in randomize_robot_location
+            self._target_location = np.array([self.target_locations[self._location][0], self.target_locations[self._location][1]], dtype=np.float32) # Base position
+            self._target_location[0] += np.float32(np.random.rand(1)*(self.target_locations[self._location][3]-self.target_locations[self._location][2]) + self.target_locations[self._location][2]) # Random contr. on target x
+            self._target_location[1] += np.float32(np.random.rand(1)*(self.target_locations[self._location][5]-self.target_locations[self._location][4]) + self.target_locations[self._location][4]) # Random contr. on target y
+            
+    def randomize_robot_location(self):
+        ## This method randomizes robot's initial position based on self._randomize_env_level (1, 3 or 4)
+        # Random Level 2 neve enters here - Robot's initial position is still
+
+        # RANDOM LEVEL 1 and 3
+        if (self._randomize_env_level == 1) or (self._randomize_env_level == 3):
+            # This method randomizes robot's initial position in a simple way
+            position_x = float(1) + float(np.random.rand(1)*2-1) # Random contribution [-1,1]
+            position_y = float(16) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
+            angle = float(math.radians(-90) + math.radians(np.random.rand(1)*60-30))
+            orientation_z = float(math.sin(angle/2))
+            orientation_w = float(math.cos(angle/2))
+
+        # RANDOM LEVEL 3.5 - Door test
+        if (self._randomize_env_level == 3.5):
+            # This resets the robot position in front of a door
+            position_x = float(6.7) + float(np.random.rand(1) - 0.5) # Random contribution [-1,1]
+            position_y = float(10.6) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
+            angle = float(math.radians(90) + math.radians(np.random.rand(1)*50-25))
+            orientation_z = float(math.sin(angle/2))
+            orientation_w = float(math.cos(angle/2))
+
+        # RANDOM LEVEL 4
+        if (self._randomize_env_level == 4):
+            # Randomly decides which location to pick for spawning
+            self._location = np.random.randint(0,len(self.robot_locations))
+            # Here we set all the coordinates
+            position_x = float(self.robot_locations[self._location][0]) + float(np.random.rand(1)*(self.robot_locations[self._location][4] - self.robot_locations[self._location][3]) + self.robot_locations[self._location][3])
+            position_y = float(self.robot_locations[self._location][1]) + float(np.random.rand(1)*(self.robot_locations[self._location][6] - self.robot_locations[self._location][5]) + self.robot_locations[self._location][5])
+            angle = float(math.radians(self.robot_locations[self._location][2]) + math.radians(np.random.rand(1)*(self.robot_locations[self._location][8] - self.robot_locations[self._location][7]) + self.robot_locations[self._location][7]))
+            orientation_z = float(math.sin(angle/2))
+            orientation_w = float(math.cos(angle/2))
+
+        return [position_x, position_y, orientation_z, orientation_w]
+    
     def compute_rewards(self, info):
         # This method computes the reward of the step
 
@@ -324,54 +418,7 @@ class HospitalBotEnv(RobotController, Env):
                 reward = min(instant_reward + attraction_reward + repulsion_reward,1)
             
         return reward
-
-    def randomize_target_location_no_obstacles(self):
-        ## This method sets the target location at a semi-random position with no obstacles within robot and target
-        self._target_location = np.array([1, 10], dtype=np.float32) # Base position [1,10]
-        self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
-        self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target y ranges in [-1,+3]
-        #self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
-
-    def randomize_target_location_obstacles(self):
-        ## This method sets the target location at a semi-random position where there are obstacles in the path from robot to target
-        location = np.random.randint(0,6) # Gets an int from 0 to 4
-        # Location zero is on the left before the chairs
-        if location == 0:
-            # Center of the location
-            self._target_location = np.array([6.5, 11], dtype=np.float32)
-            self._target_location[0] += np.float32(np.random.rand(1)*3-1.5) # Random contr. on target x ranges in [-1.5,1.5]
-            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
-        # Location one is on the left after the chairs
-        elif location == 1:
-            # Center of the location
-            self._target_location = np.array([6, 5], dtype=np.float32)
-            self._target_location[0] += np.float32(np.random.rand(1)*4-2) # Random contr. on target x ranges in [-2,2]
-            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
-        # Location two is inside the reception (in the center)
-        elif location == 2:
-            # Center of the location
-            self._target_location = np.array([0, 2], dtype=np.float32)
-            self._target_location[0] += np.float32(np.random.rand(1)*4-2) # Random contr. on target x ranges in [-2,2]
-            self._target_location[1] += np.float32(np.random.rand(1)*2-1) # Random contr. on target y ranges in [-1,1]
-        # Location three is on the right after the chairs
-        elif location == 3:
-            # Center of the location
-            self._target_location = np.array([-6, 5], dtype=np.float32)
-            self._target_location[0] += np.float32(np.random.rand(1)*4-2) # Random contr. on target x ranges in [-2,2]
-            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
-        # Location four is on the right before the chairs
-        elif location == 4:
-            # Center of the location
-            self._target_location = np.array([-6.5, 11], dtype=np.float32)
-            self._target_location[0] += np.float32(np.random.rand(1)*3-1.5) # Random contr. on target x ranges in [-1.5,+1.5]
-            self._target_location[1] += np.float32(np.random.rand(1)-0.5) # Random contr. on target y ranges in [-0.5,0.5]
-        # Location five is in the center (no obstacles)
-        else:
-            # Center of the location
-            self._target_location = np.array([1, 10], dtype=np.float32) # Base position [1,10]
-            self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
-            self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target y ranges in [-1,+3]
-
+    
     def normalize_observation(self, observation):
         ## This method normalizes the observations taken from the robot in the range [0,1]
         # Distance from target can range from 0 to 60 but we divide by ten since most times the agent never goes further
