@@ -19,7 +19,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "random_agent"
+        self._training_mode = "training"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -48,7 +48,7 @@ def main(args=None):
         id="HospitalBotEnv-v0",
         entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
         #entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
-        max_episode_steps=1000,
+        max_episode_steps=300,
     )
 
     node.get_logger().info("The environment has been registered")
@@ -83,31 +83,31 @@ def main(args=None):
     
     elif node._training_mode == "training":
         ## Train the model
-        model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir)
+        model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir, n_steps=2279, gamma=0.9880614935504514, gae_lambda=0.9435887928788405, ent_coef=0.00009689939917928778, vf_coef=0.6330533453055319, learning_rate=0.00011770118633714448, clip_range=0.1482)
         # Execute training
         try:
-            model.learn(total_timesteps=int(4000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_normalized_env_generalized")
+            model.learn(total_timesteps=int(3000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
         except KeyboardInterrupt:
-            model.save(f"{trained_models_dir}/PPO_normalized_env_generalized")
+            model.save(f"{trained_models_dir}/PPO_with_obstacles")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_normalized_env_generalized")
+        model.save(f"{trained_models_dir}/PPO_with_obstacles")
     
     elif node._training_mode == "retraining":
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'trial_10.zip')
+        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_door_test_2.zip')
         # Here we load the rained model
         #custom_obs = {'learning_rate': 0.000003, 'ent_coef': 0.01}
         model = PPO.load(trained_model_path, env=env) #, custom_objects=custom_obs)
         # Execute training
         try:
-            model.learn(total_timesteps=int(3000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_rand_targ_with_obstacles")
+            model.learn(total_timesteps=int(3000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_door_test_2_retrained")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_rand_targ_with_obstacles")
+            model.save(f"{trained_models_dir}/PPO_door_test_2_retrained")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_rand_targ_with_obstacles")
+        model.save(f"{trained_models_dir}/PPO_door_test_2_retrained")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment

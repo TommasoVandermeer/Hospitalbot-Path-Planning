@@ -22,7 +22,7 @@ class HospitalBotEnv(RobotController, Env):
     Env is a standard class of Gymnasium library which defines the basic needs of an RL environment.
     
     RobotController is a ROS2 Node used to control the agent. It includes the following attributes:
-        - _agent_location: current position of the robot
+        - _agent_location: current position of the robot (in gazebo's coordinate system)
         - _laser_reads: current scan of the LIDAR
     
     And the following methods (only the ones usefull here):
@@ -39,16 +39,16 @@ class HospitalBotEnv(RobotController, Env):
 
         # ENVIRONMENT PARAMETERS
         self.robot_name = 'HospitalBot'
-        # Initializes the Target location
+        # Initializes the Target location - effective only for randomization level 0 and 1 (see below)
         self._target_location = np.array([1, 10], dtype=np.float32) # Default is [1, 10]
         # Defines the level of randomization of the env, the more you randomize the more the model will be generalizable (no overfitting)
         # 0: no randomization
         # 1: semi-randomize only robot's initial position
         # 2: semi-randomize only target location
         # 3: semi-randomize both robot position and target location
-        # 3.5: door test randomization
-        # 4: max randomization (both target and robot are reset in many locations at each episode)
-        self._randomize_env_level = 3.5
+        # 4: semi-randomize both robot position and target location with obstacles (Door test)
+        # 5: max randomization (both target and robot are reset in many locations at each episode)
+        self._randomize_env_level = 4
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
@@ -107,7 +107,7 @@ class HospitalBotEnv(RobotController, Env):
             self.observation_space = Dict(
                 {
                     # Agent position can be anywhere inside the hospital, its limits are x=[-12;12] and y=[-35,21]
-                    # Maximum distance can be 6 but in 95% of cases it never goes over 10
+                    # Maximum distance can be 60 but in 95% of cases it never goes over 10
                     "agent": Box(low=np.array([0, 0]), high=np.array([6, 1]), dtype=np.float32),
                     # Laser reads are 61 and can range from 0.08 to 10
                     "laser": Box(low=0, high=1, shape=(61,), dtype=np.float32),
@@ -139,23 +139,27 @@ class HospitalBotEnv(RobotController, Env):
                           [-5, -6.6, 90, -0.5, 0.5, -1, 1, -30, 30],
                           [-5, 4, -90, -0.5, 0.5, -1, 1, -30, 30],
                           [-3.6, 10.9, 180, -1, 1.5, -1, 1, -15, 45],
-                          [-1.6, -8.5, 0, -1, 1, -0.5, 0.5, -30, 30]]
+                          [-1.6, -8.5, 0, -1, 1, -0.5, 0.5, -30, 30],
+                          [5, -6, 90, -0.8, 0, -1, 1, -45, 45],
+                          [2.8, -15, -90, 0, 0, -0.5, 0, -15, 15]]
         
         # This variable defines all the possible locations where the target can spawn with a self._randomize_env_level of 4
-        # Obviously these locations are striclty associated with the locations where the robot spawns
+        # Obviously these locations are strictly associated with the locations where the robot spawns
         # [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
         # x and y defines the center of the location, the bounds define the limits from the center in which the target will spawn
         self.target_locations = [[1, 10, -3, 3, -1, 3],
-                          [6.7, 12, -0.1, 0.1, -2, 2],
-                          [7, 5, -1.5, 1.5, -0.5, 0.5],
+                          [6.7, 12, -0.1, 0.1, -0.5, 2],
+                          [8, 4.8, -1.5, 1.5, -0.1, 0.1],
                           [10.8, -2.1, -1, 1, -0.1, 0.1],
-                          [4.3, -27.6, -2, 3, -0.5, 0.5],
+                          [4.3, -27.6, -2, 0.5, -0.5, 0.5],
                           [-10.5, -26.3, -0.2, 1, -1, 1],
-                          [-5, -21, -1, 1, -2, 2],
-                          [-3.1, -3.5, -0.5, 0, -1, 1],
-                          [0, 2, -2, 2, -1, 1],
+                          [-5, -21, -1, 1, -2.5, 0.5],
+                          [-3.1, -3.5, -0.1, 0.3, -1, 1],
+                          [0, 2, -3, 0, -1, 1],
                           [-7, 10.3, -0.5, 0.5, -0.5, 0.5],
-                          [3.3, -8.6, -0.5, 0.5, -0.5, 0.5]]
+                          [3.3, -8.6, -0.5, 0.5, -0.5, 0.5],
+                          [2.9, -3.5, 0, 0, -1, 1],
+                          [1.5, -19, -0.1, 0.5, -1, 1]]
 
     def step(self, action):
 
@@ -297,35 +301,35 @@ class HospitalBotEnv(RobotController, Env):
         #self.get_logger().info("Polar coordinates: " + str(self._polar_coordinates))
 
     def randomize_target_location(self):
-        ## This method randomizes target position based on self._randomize_env_level (2, 3 or 4)
-        # Random Level 1 neve enters here - Target location is still
+        ## This method randomizes target position based on self._randomize_env_level (2, 3, 4 or 5)
+        # Random Level 1 never enters here - Target location is still
 
         # RANDOM LEVEL 2 and 3
-        if (self._randomize_env_level == 2) or (self._randomize_env_level == 3):
+        if (self._randomize_env_level <= 3):
             self._target_location = np.array([1, 10], dtype=np.float32) # Base position [1,10]
             self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
             self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target y ranges in [-1,+3]
             #self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
 
-        # RANDOM LEVEL 3.5 - Door test
-        if (self._randomize_env_level == 3.5):
-            self._target_location = np.array([6.45, 16.55], dtype=np.float32) # Base position
-            self._target_location[0] += np.float32(np.random.rand(1)*1.5-0.1) # Random contr. on target x 
-            self._target_location[1] += np.float32(np.random.rand(1)*1.5-1.5) # Random contr. on target y 
-        
-        # RANDOM LEVEL 4
+        # RANDOM LEVEL 4 - Door test
         if (self._randomize_env_level == 4):
+            self._target_location = np.array([6.45, 16.55], dtype=np.float32) # Base position
+            self._target_location[0] += np.float32(np.random.rand(1)*3-0.1) # Random contr. on target x
+            self._target_location[1] += np.float32(np.random.rand(1)*2.1-2) # Random contr. on target y
+        
+        # RANDOM LEVEL 5
+        if (self._randomize_env_level == 5):
             # The location was already chosen in randomize_robot_location
             self._target_location = np.array([self.target_locations[self._location][0], self.target_locations[self._location][1]], dtype=np.float32) # Base position
             self._target_location[0] += np.float32(np.random.rand(1)*(self.target_locations[self._location][3]-self.target_locations[self._location][2]) + self.target_locations[self._location][2]) # Random contr. on target x
             self._target_location[1] += np.float32(np.random.rand(1)*(self.target_locations[self._location][5]-self.target_locations[self._location][4]) + self.target_locations[self._location][4]) # Random contr. on target y
             
     def randomize_robot_location(self):
-        ## This method randomizes robot's initial position based on self._randomize_env_level (1, 3 or 4)
-        # Random Level 2 neve enters here - Robot's initial position is still
+        ## This method randomizes robot's initial position based on self._randomize_env_level (1, 3, 4, 5)
+        # Random Level 2 never enters here - Robot's initial position is still
 
         # RANDOM LEVEL 1 and 3
-        if (self._randomize_env_level == 1) or (self._randomize_env_level == 3):
+        if (self._randomize_env_level <= 3):
             # This method randomizes robot's initial position in a simple way
             position_x = float(1) + float(np.random.rand(1)*2-1) # Random contribution [-1,1]
             position_y = float(16) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
@@ -333,17 +337,17 @@ class HospitalBotEnv(RobotController, Env):
             orientation_z = float(math.sin(angle/2))
             orientation_w = float(math.cos(angle/2))
 
-        # RANDOM LEVEL 3.5 - Door test
-        if (self._randomize_env_level == 3.5):
-            # This resets the robot position in front of a door
-            position_x = float(6.7) + float(np.random.rand(1) - 0.5) # Random contribution [-1,1]
-            position_y = float(10.6) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
-            angle = float(math.radians(90) + math.radians(np.random.rand(1)*50-25))
+        # RANDOM LEVEL 4 - Door test
+        if (self._randomize_env_level == 4):
+            # This resets the robot position in front of a door 6.7, 11.2
+            position_x = float(6.7) + float(np.random.rand(1)*0.2 - 0.1) # Random contribution [-0.1,0.1]
+            position_y = float(11.2) + float(np.random.rand(1)*0.3) # Random contribution [0,0.3]
+            angle = float(math.radians(90) + math.radians(np.random.rand(1)*30-15)) # Random contribution [-15,15]
             orientation_z = float(math.sin(angle/2))
             orientation_w = float(math.cos(angle/2))
 
-        # RANDOM LEVEL 4
-        if (self._randomize_env_level == 4):
+        # RANDOM LEVEL 5
+        if (self._randomize_env_level == 5):
             # Randomly decides which location to pick for spawning
             self._location = np.random.randint(0,len(self.robot_locations))
             # Here we set all the coordinates
@@ -436,7 +440,7 @@ class HospitalBotEnv(RobotController, Env):
 
     def denormalize_action(self, norm_act):
         ## This method de-normalizes the action before sending it to the robot - The action is normalized between [-1,1]
-        # Linear velocity can also not be symmetric
+        # Linear velocity can also be asymmetric
         action_linear = ((self._max_linear_velocity*(norm_act[0]+1)) + (self._min_linear_velocity*(1-norm_act[0])))/2
         # Angular velicity is symmetric
         action_angular = ((self._angular_velocity*(norm_act[1]+1)) + (-self._angular_velocity*(1-norm_act[1])))/2
