@@ -48,7 +48,7 @@ class HospitalBotEnv(RobotController, Env):
         # 3: semi-randomize both robot position and target location
         # 4: semi-randomize both robot position and target location with obstacles (Door test)
         # 5: max randomization (both target and robot are reset in many locations at each episode)
-        self._randomize_env_level = 4
+        self._randomize_env_level = 5
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]

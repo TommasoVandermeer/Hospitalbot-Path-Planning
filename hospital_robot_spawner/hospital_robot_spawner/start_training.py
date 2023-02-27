@@ -19,7 +19,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "training"
+        self._training_mode = "retraining"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -83,7 +83,8 @@ def main(args=None):
     
     elif node._training_mode == "training":
         ## Train the model
-        model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir, n_steps=2279, gamma=0.9880614935504514, gae_lambda=0.9435887928788405, ent_coef=0.00009689939917928778, vf_coef=0.6330533453055319, learning_rate=0.00011770118633714448, clip_range=0.1482)
+        #model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir, n_steps=2279, gamma=0.9880614935504514, gae_lambda=0.9435887928788405, ent_coef=0.00009689939917928778, vf_coef=0.6330533453055319, learning_rate=0.00011770118633714448, clip_range=0.1482)
+        model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir, n_steps=6400, gamma=0.9880614935504514, gae_lambda=0.9435887928788405, ent_coef=0.00009689939917928778, vf_coef=0.6330533453055319, learning_rate=0.00003770118633714448, clip_range=0.1482)
         # Execute training
         try:
             model.learn(total_timesteps=int(3000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
@@ -96,18 +97,18 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_door_test_2.zip')
+        trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_trial_9.zip')
         # Here we load the rained model
         #custom_obs = {'learning_rate': 0.000003, 'ent_coef': 0.01}
         model = PPO.load(trained_model_path, env=env) #, custom_objects=custom_obs)
         # Execute training
         try:
-            model.learn(total_timesteps=int(3000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_door_test_2_retrained")
+            model.learn(total_timesteps=int(3000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_trial_9")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_door_test_2_retrained")
+            model.save(f"{trained_models_dir}/PPO_trial_9_retrained")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_door_test_2_retrained")
+        model.save(f"{trained_models_dir}/PPO_trial_9_retrained")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment
@@ -115,7 +116,7 @@ def main(args=None):
         del env
         # Hyperparameter tuning using Optuna
         study = optuna.create_study(direction='maximize')
-        study.optimize(optimize_agent, n_trials=20, n_jobs=1)
+        study.optimize(optimize_agent, n_trials=10, n_jobs=1)
         # Print best params
         node.get_logger().info("Best Hyperparameters: " + str(study.best_params))
 
@@ -136,6 +137,18 @@ def optimize_ppo(trial):
         'vf_coef': trial.suggest_uniform('vf_coef', 0, 1), # Default: 0.5
     }
 
+def optimize_ppo_refinement(trial):
+    ## This method defines a smaller range of hyperparams to search fo the best tuning
+    return {
+        'n_steps': trial.suggest_int('n_steps', 2048, 14336), # Default: 2048
+        'gamma': trial.suggest_loguniform('gamma', 0.96, 0.9999), # Default: 0.99
+        'learning_rate': trial.suggest_loguniform('learning_rate', 1e-5, 9e-4), # Default: 3e-4
+        'clip_range': trial.suggest_uniform('clip_range', 0.15, 0.37), # Default: 0.02
+        'gae_lambda': trial.suggest_uniform('gae_lambda', 0.94, 0.99), # Default: 0.95
+        'ent_coef': trial.suggest_loguniform('ent_coef', 0.00000001, 0.00001), # Default: 0.0
+        'vf_coef': trial.suggest_uniform('vf_coef', 0.55, 0.65), # Default: 0.5
+    }
+
 def optimize_agent(trial):
     ## This method is used to optimize the hyperparams for our problem
     try:
@@ -146,10 +159,11 @@ def optimize_agent(trial):
         LOG_DIR = os.path.join(PKG_DIR, 'logs')
         SAVE_PATH = os.path.join(PKG_DIR, 'tuning', 'trial_{}'.format(trial.number))
         # Setup the parameters
-        model_params = optimize_ppo(trial)
+        #model_params = optimize_ppo(trial)
+        model_params = optimize_ppo_refinement(trial)
         # Setup the model
         model = PPO("MultiInputPolicy", env_opt, tensorboard_log=LOG_DIR, verbose=0, **model_params)
-        model.learn(total_timesteps=100000)
+        model.learn(total_timesteps=150000)
         # Evaluate the model
         mean_reward, _ = evaluate_policy(model, env_opt, n_eval_episodes=20)
         # Close env and delete
