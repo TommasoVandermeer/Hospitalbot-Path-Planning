@@ -33,7 +33,7 @@ def main(args=None):
     node.get_logger().info("Training node has been created")
 
     # Create the dir where the trained RL models will be saved
-    pkg_dir = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
+    pkg_dir = '~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
     trained_models_dir = os.path.join(pkg_dir, 'rl_models')
     log_dir = os.path.join(pkg_dir, 'logs')
     
@@ -155,7 +155,7 @@ def optimize_agent(trial):
         # Create environment
         env_opt = gym.make('HospitalBotEnv-v0')
         # Setup dirs
-        PKG_DIR = '/home/tommaso/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
+        PKG_DIR = '~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
         LOG_DIR = os.path.join(PKG_DIR, 'logs')
         SAVE_PATH = os.path.join(PKG_DIR, 'tuning', 'trial_{}'.format(trial.number))
         # Setup the parameters
