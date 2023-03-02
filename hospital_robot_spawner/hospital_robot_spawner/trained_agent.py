@@ -17,7 +17,6 @@ class TrainedAgent(Node):
         super().__init__("trained_hospitalbot", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
 def main(args=None):
-    # TEEST
     rclpy.init()
     node = TrainedAgent()
     node.get_logger().info("Trained agent node has been created")
