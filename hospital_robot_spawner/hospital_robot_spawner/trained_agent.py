@@ -22,8 +22,9 @@ def main(args=None):
     node.get_logger().info("Trained agent node has been created")
 
     # We get the dir where the models are saved
-    pkg_dir = '~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_model_path = os.path.join(pkg_dir, 'rl_models', 'PPO_trial_9_retrained.zip')
+    home_dir = os.path.expanduser('~')
+    pkg_dir = 'ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
+    trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_trial_9_retrained.zip')
 
     # Register the gym environment
     register(

@@ -19,7 +19,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "retraining"
+        self._training_mode = "random_agent"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -33,9 +33,10 @@ def main(args=None):
     node.get_logger().info("Training node has been created")
 
     # Create the dir where the trained RL models will be saved
-    pkg_dir = '~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_models_dir = os.path.join(pkg_dir, 'rl_models')
-    log_dir = os.path.join(pkg_dir, 'logs')
+    home_dir = os.path.expanduser('~')
+    pkg_dir = 'ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
+    trained_models_dir = os.path.join(home_dir, pkg_dir, 'rl_models')
+    log_dir = os.path.join(home_dir, pkg_dir, 'logs')
     
     # If the directories do not exist we create them
     if not os.path.exists(trained_models_dir):
@@ -155,9 +156,10 @@ def optimize_agent(trial):
         # Create environment
         env_opt = gym.make('HospitalBotEnv-v0')
         # Setup dirs
-        PKG_DIR = '~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-        LOG_DIR = os.path.join(PKG_DIR, 'logs')
-        SAVE_PATH = os.path.join(PKG_DIR, 'tuning', 'trial_{}'.format(trial.number))
+        HOME_DIR = os.path.expanduser('~')
+        PKG_DIR = 'ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
+        LOG_DIR = os.path.join(HOME_DIR, PKG_DIR, 'logs')
+        SAVE_PATH = os.path.join(HOME_DIR, PKG_DIR, 'tuning', 'trial_{}'.format(trial.number))
         # Setup the parameters
         #model_params = optimize_ppo(trial)
         model_params = optimize_ppo_refinement(trial)
