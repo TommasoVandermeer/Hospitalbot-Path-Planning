@@ -6,7 +6,7 @@ from std_srvs.srv import Empty
 from functools import partial
 import numpy as np
 import math
-from gazebo_msgs.srv import DeleteEntity, SpawnEntity, SetModelState
+from gazebo_msgs.srv import DeleteEntity, SpawnEntity, SetModelState, SetEntityState
 import os
 from ament_index_python.packages import get_package_share_directory
 #from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
@@ -24,11 +24,12 @@ class RobotController(Node):
         - /demo/laser/out : laser readings
     
     Services used:
+        - /demo/set_entity_state : sets the new state of the robot and target when an episode ends
+
+    Services not used:
         - /reset_simulation : resets the gazebo simulation
         - /reset_robot : resets the robot position
         - /reset_target : resets the target position
-
-    Services not used:
         - /delete_entity : unspawns the robot from the simulation
         - /spawn_entity : spawns the robot in the simulation in a semi-random position
 
@@ -46,12 +47,16 @@ class RobotController(Node):
         self.pose_sub = self.create_subscription(Odometry, '/demo/odom', self.pose_callback, 1)
         # Laser subscriber
         self.laser_sub = self.create_subscription(LaserScan, '/demo/laser/out', self.laser_callback, 1)
-        # Reset simulation client
+        # Reset model state client - this resets the pose and velocity of a given model within the world
+        self.client_state = self.create_client(SetEntityState, "/demo/set_entity_state")
+
+        # Reset simulation client - UNUSED
         self.client_sim = self.create_client(Empty, "/reset_simulation")
-        # Reset environment client - this resets the robot to a random initial position
+        # Reset environment client - this resets the robot to a random initial position - UNUSED
         self.client_env = self.create_client(SetModelState, "/reset_robot")
-        # Reset target client - this resets the target to the new position
+        # Reset target client - this resets the target to the new position - UNUSED
         self.client_target = self.create_client(SetModelState, "/reset_target")
+        
         
         # Get the directory of the sdf of the robot
         self._pkg_dir = os.path.join(
@@ -83,7 +88,61 @@ class RobotController(Node):
         self._laser_reads[self._laser_reads == np.inf] = np.float32(10)
         #self.get_logger().info("Min Laser Read: " + str(min(self._laser_reads)))
 
-    # Method to reset the simulation (calls the service /reset_simulation)
+    # Method to set the state of the robot when an episode ends - /demo/set_entity_state service
+    def call_set_robot_state_service(self, robot_pose=[1, 16, -0.707, 0.707]):
+        while not self.client_state.wait_for_service(1.0):
+            self.get_logger().warn("Waiting for service...")
+
+        request = SetEntityState.Request()
+        request.state.name = self.robot_name
+        # Pose (position and orientation)
+        request.state.pose.position.x = float(robot_pose[0])
+        request.state.pose.position.y = float(robot_pose[1])
+        request.state.pose.orientation.z = float(robot_pose[2])
+        request.state.pose.orientation.w = float(robot_pose[3])
+        # Velocity
+        request.state.twist.linear.x = float(0)
+        request.state.twist.linear.y = float(0)
+        request.state.twist.linear.z = float(0)
+        request.state.twist.angular.x = float(0)
+        request.state.twist.angular.y = float(0)
+        request.state.twist.angular.z = float(0)
+
+        future = self.client_state.call_async(request)
+        future.add_done_callback(partial(self.callback_set_robot_state))
+
+    # Method that elaborates the future obtained by callig the call_set_robot_state_service method
+    def callback_set_robot_state(self, future):
+        try:
+            response= future.result()
+            #self.get_logger().info("The Environment has been successfully reset")
+            self._done_set_rob_state = True
+        except Exception as e:
+            self.get_logger().error("Service call failed: %r" % (e,))
+
+    # Method to set the state of the target when an episode ends - /demo/set_entity_state service
+    def call_set_target_state_service(self, position=[1, 10]):
+        while not self.client_state.wait_for_service(1.0):
+            self.get_logger().warn("Waiting for service...")
+
+        request = SetEntityState.Request()
+        request.state.name = "Target"
+        # Pose (position and orientation)
+        request.state.pose.position.x = float(position[0])
+        request.state.pose.position.y = float(position[1])
+
+        future = self.client_state.call_async(request)
+        future.add_done_callback(partial(self.callback_set_target_state))
+
+    # Method that elaborates the future obtained by callig the call_set_target_state_service method
+    def callback_set_target_state(self, future):
+        try:
+            response= future.result()
+            #self.get_logger().info("The Environment has been successfully reset")
+        except Exception as e:
+            self.get_logger().error("Service call failed: %r" % (e,))
+
+    # Method to reset the simulation (calls the service /reset_simulation) - NOT USED
     def call_reset_simulation_service(self):
         while not self.client_sim.wait_for_service(1.0):
             self.get_logger().warn("Waiting for service...")
@@ -93,7 +152,7 @@ class RobotController(Node):
         future = self.client_sim.call_async(request)
         future.add_done_callback(partial(self.callback_reset_simulation))
 
-    # Method that elaborates the future obtained by callig the /reset_simulation service
+    # Method that elaborates the future obtained by callig the /reset_simulation service - NOT USED
     def callback_reset_simulation(self, future):
         try:
             response= future.result()
@@ -102,7 +161,7 @@ class RobotController(Node):
         except Exception as e:
             self.get_logger().error("Service call failed: %r" % (e,))
 
-    # Method to reset the simulation (calls the service /reset_environment)
+    # Method to reset the simulation (calls the service /reset_environment) - NOT USED
     def call_reset_robot_service(self, robot_pose=[1, 16, -0.707, 0.707]):
         while not self.client_env.wait_for_service(1.0):
             self.get_logger().warn("Waiting for service...")
@@ -117,7 +176,7 @@ class RobotController(Node):
         future = self.client_env.call_async(request)
         future.add_done_callback(partial(self.callback_reset_robot))
 
-    # Method that elaborates the future obtained by callig the /reset_environment service - USED ONLY FOR VISUALIZATION
+    # Method that elaborates the future obtained by callig the /reset_environment service- NOT USED
     def callback_reset_robot(self, future):
         try:
             response= future.result()
@@ -126,7 +185,7 @@ class RobotController(Node):
         except Exception as e:
             self.get_logger().error("Service call failed: %r" % (e,))
 
-    # Method to reset the target position (calls the service /reset_target) - USED ONLY FOR VISUALIZATION
+    # Method to reset the target position (calls the service /reset_target) - NOT USED
     def call_reset_target_service(self, position=[1, 10]):
         while not self.client_target.wait_for_service(1.0):
             self.get_logger().warn("Waiting for service...")
@@ -139,7 +198,7 @@ class RobotController(Node):
         future = self.client_target.call_async(request)
         future.add_done_callback(partial(self.callback_reset_target))
 
-    # Method that elaborates the future obtained by callig the /reset_target service
+    # Method that elaborates the future obtained by callig the /reset_target service - NOT USED
     def callback_reset_target(self, future):
         try:
             response= future.result()

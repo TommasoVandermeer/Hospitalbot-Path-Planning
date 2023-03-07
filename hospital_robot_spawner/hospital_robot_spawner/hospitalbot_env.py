@@ -54,7 +54,7 @@ class HospitalBotEnv(RobotController, Env):
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
-        self._visualize_target = False
+        self._visualize_target = True
         # 0: simple reward, 1: heuristic, 2: adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = 0
         # Initializes the maximal linear velocity used in actions
@@ -205,25 +205,36 @@ class HospitalBotEnv(RobotController, Env):
     def reset(self, seed=None, options=None):
         #self.get_logger().info("Resetting the environment")
 
-        # Reset the done reset variable
+        """# Reset the done reset variable
         self._done_reset_sim = False
         # Calls the reset simulation service
         self.call_reset_simulation_service()
         # Here we spin the node until the /reset_simulation service responds, otherwise we get random observations
         while self._done_reset_sim == False:
-            rclpy.spin_once(self)
+            rclpy.spin_once(self)"""
 
         if (self._randomize_env_level == 1) or (self._randomize_env_level >= 3):
         # Calls the reset robot position service
-            # Reset the done reset variable
-            self._done_reset_env = False
             # Get the new pose
             pose2d = self.randomize_robot_location()
+
+            """# Reset the done reset variable
+            self._done_reset_env = False
             # Call the reset robot position service
             self.call_reset_robot_service(pose2d)
             # Here we spin the node until the /reset_environment service responds, otherwise we get random observations
             while self._done_reset_env == False:
+                rclpy.spin_once(self)"""
+            
+            ## ADDED
+            # Reset the done reset variable
+            self._done_set_rob_state = False
+            # Call the set robot position service
+            self.call_set_robot_state_service(pose2d)
+            # Here we spin the node until the /set_entity_state service responds, otherwise we get random observations
+            while self._done_set_rob_state == False:
                 rclpy.spin_once(self)
+            ## END ADDED
         
         if (self._randomize_env_level >= 2):
         # Randomize target location
@@ -231,7 +242,8 @@ class HospitalBotEnv(RobotController, Env):
 
         # Here we set the new target position for visualization
         if self._visualize_target == True:
-            self.call_reset_target_service(self._target_location)
+            """self.call_reset_target_service(self._target_location)"""
+            self.call_set_target_state_service(self._target_location)
 
         # Compute the initial observation
         self._previous_agent_location = self._agent_location
