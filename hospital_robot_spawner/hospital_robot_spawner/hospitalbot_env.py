@@ -54,7 +54,7 @@ class HospitalBotEnv(RobotController, Env):
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
-        self._visualize_target = True
+        self._visualize_target = False
         # 0: simple reward, 1: heuristic, 2: adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = 0
         # Initializes the maximal linear velocity used in actions
@@ -214,6 +214,7 @@ class HospitalBotEnv(RobotController, Env):
             rclpy.spin_once(self)
 
         if (self._randomize_env_level == 1) or (self._randomize_env_level >= 3):
+        # Calls the reset robot position service
             # Reset the done reset variable
             self._done_reset_env = False
             # Get the new pose
@@ -225,6 +226,7 @@ class HospitalBotEnv(RobotController, Env):
                 rclpy.spin_once(self)
         
         if (self._randomize_env_level >= 2):
+        # Randomize target location
             self.randomize_target_location()
 
         # Here we set the new target position for visualization

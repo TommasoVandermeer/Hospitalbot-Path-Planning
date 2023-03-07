@@ -28,9 +28,9 @@ class ResetNode(Node):
         # This method has to be outside the gym env because otherwise it makes the simulation crash
         
         #self.get_logger().info("Incoming request")
-        name = request.model_state.model_name
         ## Now, using a python subprocess, we set the semi-random initial position
         # Set position position
+        name = request.model_state.model_name
         position_x = float(request.model_state.pose.position.x)
         position_y = float(request.model_state.pose.position.y)
         orientation_z = float(request.model_state.pose.orientation.z)
@@ -56,10 +56,13 @@ class ResetNode(Node):
         position = f'{{x: {str(position_x)}, y: {str(position_y)}, z: 0.01}}'
         orientation = f'{{x: 0, y: 0, z: 0, w: 0}}'
         msg = f"name: '{name}', position: {position}, orientation: {orientation}"
-        # Cast the subprocess to call the gazebo service
         #self.get_logger().info("MSG: " + f"{msg}")
 
-        subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], close_fds=True)
+        # Cast the subprocess to call the gazebo service
+        try:
+            subprocess.run(["gz","topic","-p","/gazebo/world/pose/modify", "-m", f"{msg}"], close_fds=True)
+        except Exception as e:
+            self.get_logger().error("Subprocess run failed: %r" % (e,))
         
         return response
 

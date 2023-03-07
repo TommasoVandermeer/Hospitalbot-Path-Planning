@@ -26,6 +26,7 @@
   <depend>math</depend>
   <depend>subprocess</depend>
   <depend>optuna</depend>
+  <depend>tensorboard</depend>
 
 
   <test_depend>ament_copyright</test_depend>

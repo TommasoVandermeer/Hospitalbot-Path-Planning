@@ -1,6 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
 <sdf version="1.6">
   <world name="world">
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/demo</namespace>
+        <remapping>model_states:=model_states_demo</remapping>
+        <remapping>link_states:=link_states_demo</remapping>
+      </ros>
+      <update_rate>1.0</update_rate>
+    </plugin>
     <gui>
       <camera name='gzclient_camera'>
         <pose>-4.70385 10.895 16.2659 -0 0.921795 -1.12701</pose>
