@@ -39,8 +39,10 @@ class HospitalBotEnv(RobotController, Env):
 
         # ENVIRONMENT PARAMETERS
         self.robot_name = 'HospitalBot'
-        # Initializes the Target location - effective only for randomization level 0 and 1 (see below)
+        # Initializes the Target location (x,y) - effective only for randomization level 0 and 1 (see below)
         self._target_location = np.array([1, 10], dtype=np.float32) # Default is [1, 10]
+        # Initializes the starting agent location for each episode (x,y,angle) - effective only for randomization level 0 and 2 (see below)
+        self._initial_agent_location = np.array([1, 16, -90], dtype=np.float32) # Default is [1, 16, -90]
         # Defines the level of randomization of the env, the more you randomize the more the model will be generalizable (no overfitting)
         # 0: no randomization
         # 1: semi-randomize only robot's initial position
@@ -48,7 +50,7 @@ class HospitalBotEnv(RobotController, Env):
         # 3: semi-randomize both robot position and target location
         # 4: semi-randomize both robot position and target location with obstacles (Door test)
         # 5: max randomization (both target and robot are reset in many locations at each episode)
-        self._randomize_env_level = 5
+        self._randomize_env_level = 0
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
@@ -126,7 +128,7 @@ class HospitalBotEnv(RobotController, Env):
                 }
             )
         
-        # This variable defines all the possible locations where the robot can spawn with a self._randomize_env_level of 4
+        # This variable defines all the possible locations where the robot can spawn with a self._randomize_env_level of 5
         # [x, y, angle, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound, angle_lowerbound, angle_upperbound]
         # x, y and angle defines the center of the location and the orientation, the bounds define the limits from the center in which the robot will spawn
         self.robot_locations = [[1, 16, -90, -1, 1, -0.5, 0.5, -30, 30],
@@ -143,7 +145,7 @@ class HospitalBotEnv(RobotController, Env):
                           [5, -6, 90, -0.8, 0, -1, 1, -45, 45],
                           [2.8, -15, -90, 0, 0, -0.5, 0, -15, 15]]
         
-        # This variable defines all the possible locations where the target can spawn with a self._randomize_env_level of 4
+        # This variable defines all the possible locations where the target can spawn with a self._randomize_env_level of 5
         # Obviously these locations are strictly associated with the locations where the robot spawns
         # [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
         # x and y defines the center of the location, the bounds define the limits from the center in which the target will spawn
@@ -205,36 +207,16 @@ class HospitalBotEnv(RobotController, Env):
     def reset(self, seed=None, options=None):
         #self.get_logger().info("Resetting the environment")
 
-        """# Reset the done reset variable
-        self._done_reset_sim = False
-        # Calls the reset simulation service
-        self.call_reset_simulation_service()
-        # Here we spin the node until the /reset_simulation service responds, otherwise we get random observations
-        while self._done_reset_sim == False:
-            rclpy.spin_once(self)"""
-
-        if (self._randomize_env_level == 1) or (self._randomize_env_level >= 3):
-        # Calls the reset robot position service
-            # Get the new pose
-            pose2d = self.randomize_robot_location()
-
-            """# Reset the done reset variable
-            self._done_reset_env = False
-            # Call the reset robot position service
-            self.call_reset_robot_service(pose2d)
-            # Here we spin the node until the /reset_environment service responds, otherwise we get random observations
-            while self._done_reset_env == False:
-                rclpy.spin_once(self)"""
-            
-            ## ADDED
-            # Reset the done reset variable
-            self._done_set_rob_state = False
-            # Call the set robot position service
-            self.call_set_robot_state_service(pose2d)
-            # Here we spin the node until the /set_entity_state service responds, otherwise we get random observations
-            while self._done_set_rob_state == False:
-                rclpy.spin_once(self)
-            ## END ADDED
+        # Get the new pose of the robot
+        pose2d = self.randomize_robot_location()
+        
+        # Reset the done reset variable
+        self._done_set_rob_state = False
+        # Call the set robot position service
+        self.call_set_robot_state_service(pose2d)
+        # Here we spin the node until the /set_entity_state service responds, otherwise we get random observations
+        while self._done_set_rob_state == False:
+            rclpy.spin_once(self)
         
         if (self._randomize_env_level >= 2):
         # Randomize target location
@@ -242,7 +224,6 @@ class HospitalBotEnv(RobotController, Env):
 
         # Here we set the new target position for visualization
         if self._visualize_target == True:
-            """self.call_reset_target_service(self._target_location)"""
             self.call_set_target_state_service(self._target_location)
 
         # Compute the initial observation
@@ -316,10 +297,10 @@ class HospitalBotEnv(RobotController, Env):
 
     def randomize_target_location(self):
         ## This method randomizes target position based on self._randomize_env_level (2, 3, 4 or 5)
-        # Random Level 1 never enters here - Target location is still
+        # Random Level 0 and 1 never enter here - Target location is still
 
         # RANDOM LEVEL 2 and 3
-        if (self._randomize_env_level <= 3):
+        if (self._randomize_env_level == 2) or (self._randomize_env_level == 3):
             self._target_location = np.array([1, 10], dtype=np.float32) # Base position [1,10]
             self._target_location[0] += np.float32(np.random.rand(1)*6-3) # Random contr. on target x ranges in [-3,+3]
             self._target_location[1] += np.float32(np.random.rand(1)*4-1) # Random contr. on target y ranges in [-1,+3]
@@ -339,11 +320,18 @@ class HospitalBotEnv(RobotController, Env):
             self._target_location[1] += np.float32(np.random.rand(1)*(self.target_locations[self._location][5]-self.target_locations[self._location][4]) + self.target_locations[self._location][4]) # Random contr. on target y
             
     def randomize_robot_location(self):
-        ## This method randomizes robot's initial position based on self._randomize_env_level (1, 3, 4, 5)
-        # Random Level 2 never enters here - Robot's initial position is still
+        ## This method randomizes robot's initial position based on self._randomize_env_level (0, 1, 2, 3, 4, 5)
 
-        # RANDOM LEVEL 1 and 3
-        if (self._randomize_env_level <= 3):
+        # RANDOM LEVEL 0 and 2 - Fixed position
+        if (self._randomize_env_level == 0) or (self._randomize_env_level == 2):
+            position_x = float(self._initial_agent_location[0])
+            position_y = float(self._initial_agent_location[1])
+            angle = float(self._initial_agent_location[2])
+            orientation_z = float(math.sin(angle/2))
+            orientation_w = float(math.cos(angle/2))
+
+        # RANDOM LEVEL 1 and 3 - Single location randomization
+        if (self._randomize_env_level == 1) or (self._randomize_env_level == 3):
             # This method randomizes robot's initial position in a simple way
             position_x = float(1) + float(np.random.rand(1)*2-1) # Random contribution [-1,1]
             position_y = float(16) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
@@ -360,7 +348,7 @@ class HospitalBotEnv(RobotController, Env):
             orientation_z = float(math.sin(angle/2))
             orientation_w = float(math.cos(angle/2))
 
-        # RANDOM LEVEL 5
+        # RANDOM LEVEL 5 - Multiple location randomization
         if (self._randomize_env_level == 5):
             # Randomly decides which location to pick for spawning
             self._location = np.random.randint(0,len(self.robot_locations))

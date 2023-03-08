@@ -6,7 +6,7 @@ from gym.envs.registration import register
 from hospital_robot_spawner.hospitalbot_env import HospitalBotEnv
 from hospital_robot_spawner.hospitalbot_simplified_env import HospitalBotSimpleEnv
 import gym
-from stable_baselines3 import A2C, PPO, DQN, DDPG
+from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 import os
@@ -19,7 +19,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "random_agent"
+        self._training_mode = "retraining"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -67,7 +67,7 @@ def main(args=None):
 
     # Now we create two callbacks which will be executed during training
     stop_callback = StopTrainingOnRewardThreshold(reward_threshold=900, verbose=1)
-    eval_callback = EvalCallback(env, callback_on_new_best=stop_callback, eval_freq=25000, best_model_save_path=trained_models_dir, n_eval_episodes=15)
+    eval_callback = EvalCallback(env, callback_on_new_best=stop_callback, eval_freq=100000, best_model_save_path=trained_models_dir, n_eval_episodes=30)
     
     if node._training_mode == "random_agent":
         # N° Episodes
@@ -98,7 +98,7 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_2.zip')
+        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_3.zip')
         # Here we load the rained model
         custom_obs = {'learning_rate': 0.00002}
         model = PPO.load(trained_model_path, env=env, custom_objects=custom_obs)
@@ -107,9 +107,9 @@ def main(args=None):
             model.learn(total_timesteps=int(15000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_3")
+            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_4")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_3")
+        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_4")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment

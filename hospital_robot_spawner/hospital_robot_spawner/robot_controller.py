@@ -28,14 +28,8 @@ class RobotController(Node):
 
     Services not used:
         - /reset_simulation : resets the gazebo simulation
-        - /reset_robot : resets the robot position
-        - /reset_target : resets the target position
         - /delete_entity : unspawns the robot from the simulation
         - /spawn_entity : spawns the robot in the simulation in a semi-random position
-
-    Gazebo topic:
-        - /gazebo/world/pose/modify : instantly modifies the pose and orientation of any model
-        Es: [gz topic -p /gazebo/world/pose/modify -m "name: 'HospitalBot', position: {x: 1, y: 10, z: 0}, orientation: {x: 0, y: 0, z: 1, w: 0}"]
     """
     def __init__(self):
         super().__init__('robot_controller')
@@ -52,10 +46,6 @@ class RobotController(Node):
 
         # Reset simulation client - UNUSED
         self.client_sim = self.create_client(Empty, "/reset_simulation")
-        # Reset environment client - this resets the robot to a random initial position - UNUSED
-        self.client_env = self.create_client(SetModelState, "/reset_robot")
-        # Reset target client - this resets the target to the new position - UNUSED
-        self.client_target = self.create_client(SetModelState, "/reset_target")
         
         
         # Get the directory of the sdf of the robot
@@ -142,7 +132,7 @@ class RobotController(Node):
         except Exception as e:
             self.get_logger().error("Service call failed: %r" % (e,))
 
-    # Method to reset the simulation (calls the service /reset_simulation) - NOT USED
+    # NOT USED - Method to reset the simulation (calls the service /reset_simulation)
     def call_reset_simulation_service(self):
         while not self.client_sim.wait_for_service(1.0):
             self.get_logger().warn("Waiting for service...")
@@ -152,7 +142,7 @@ class RobotController(Node):
         future = self.client_sim.call_async(request)
         future.add_done_callback(partial(self.callback_reset_simulation))
 
-    # Method that elaborates the future obtained by callig the /reset_simulation service - NOT USED
+    # NOT USED - Method that elaborates the future obtained by callig the /reset_simulation service
     def callback_reset_simulation(self, future):
         try:
             response= future.result()
@@ -161,52 +151,7 @@ class RobotController(Node):
         except Exception as e:
             self.get_logger().error("Service call failed: %r" % (e,))
 
-    # Method to reset the simulation (calls the service /reset_environment) - NOT USED
-    def call_reset_robot_service(self, robot_pose=[1, 16, -0.707, 0.707]):
-        while not self.client_env.wait_for_service(1.0):
-            self.get_logger().warn("Waiting for service...")
-
-        request = SetModelState.Request()
-        request.model_state.model_name = self.robot_name
-        request.model_state.pose.position.x = float(robot_pose[0])
-        request.model_state.pose.position.y = float(robot_pose[1])
-        request.model_state.pose.orientation.z = float(robot_pose[2])
-        request.model_state.pose.orientation.w = float(robot_pose[3])
-
-        future = self.client_env.call_async(request)
-        future.add_done_callback(partial(self.callback_reset_robot))
-
-    # Method that elaborates the future obtained by callig the /reset_environment service- NOT USED
-    def callback_reset_robot(self, future):
-        try:
-            response= future.result()
-            #self.get_logger().info("The Environment has been successfully reset")
-            self._done_reset_env = True
-        except Exception as e:
-            self.get_logger().error("Service call failed: %r" % (e,))
-
-    # Method to reset the target position (calls the service /reset_target) - NOT USED
-    def call_reset_target_service(self, position=[1, 10]):
-        while not self.client_target.wait_for_service(1.0):
-            self.get_logger().warn("Waiting for service...")
-
-        request = SetModelState.Request()
-        request.model_state.model_name = "Target"
-        request.model_state.pose.position.x = float(position[0])
-        request.model_state.pose.position.y = float(position[1])
-
-        future = self.client_target.call_async(request)
-        future.add_done_callback(partial(self.callback_reset_target))
-
-    # Method that elaborates the future obtained by callig the /reset_target service - NOT USED
-    def callback_reset_target(self, future):
-        try:
-            response= future.result()
-            #self.get_logger().info("The Target has been successfully reset")
-        except Exception as e:
-            self.get_logger().error("Service call failed: %r" % (e,))
-
-    # Method to unspawn the robot from the simulation - NOT USED
+    # NOT USED - Method to unspawn the robot from the simulation
     def call_delete_entity_service(self):
         client = self.create_client(DeleteEntity, '/delete_entity')
         while not client.wait_for_service(1.0):
@@ -218,7 +163,7 @@ class RobotController(Node):
         future = client.call_async(request)
         future.add_done_callback(partial(self.callback_delete_entity))
 
-    # Method that elaborates the future obtained by callig the /delete_entity service  - NOT USED
+    # NOT USED - Method that elaborates the future obtained by callig the /delete_entity service
     def callback_delete_entity(self, future):
         try:
             response= future.result()
@@ -227,7 +172,7 @@ class RobotController(Node):
         except Exception as e:
             self.get_logger().error("DeleteEntity Service call failed: %r" % (e,))
 
-    # Method to spawn the robot inside the simulation at any given position  - NOT USED
+    # NOT USED - Method to spawn the robot inside the simulation at any given position
     def call_spawn_entity_service(self):
         client = self.create_client(SpawnEntity, '/spawn_entity')
         while not client.wait_for_service(1.0):
@@ -249,7 +194,7 @@ class RobotController(Node):
         future = client.call_async(request)
         future.add_done_callback(partial(self.callback_spawn_entity))
 
-    # Method that elaborates the future obtained by callig the /spawn_entity service  - NOT USED
+    # NOT USED - Method that elaborates the future obtained by callig the /spawn_entity service
     def callback_spawn_entity(self, future):
         try:
             response= future.result()

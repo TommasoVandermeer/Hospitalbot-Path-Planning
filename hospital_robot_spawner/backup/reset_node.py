@@ -1,10 +1,7 @@
 import rclpy
 from rclpy.node import Node
-from std_srvs.srv import Empty
 from gazebo_msgs.srv import SetModelState
 import subprocess
-import numpy as np
-import math
 
 class ResetNode(Node):
     """

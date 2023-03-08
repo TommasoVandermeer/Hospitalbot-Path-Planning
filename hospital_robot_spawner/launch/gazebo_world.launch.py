@@ -35,10 +35,7 @@ def generate_launch_description():
                         arguments=['HospitalBot', 'demo', '1', '16.0', '0.0'],
                         output='screen')
 
-    reset_node = Node(package='hospital_robot_spawner', executable='reset_node', output='screen')
-
     return LaunchDescription([
         gazebo,
         spawn_entity,
-        reset_node,
     ])

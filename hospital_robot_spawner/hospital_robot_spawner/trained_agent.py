@@ -5,7 +5,7 @@ from rclpy.node import Node
 from gym.envs.registration import register
 from hospital_robot_spawner.hospitalbot_env import HospitalBotEnv
 import gym
-from stable_baselines3 import A2C, PPO, DQN, DDPG
+from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 import os
@@ -24,7 +24,7 @@ def main(args=None):
     # We get the dir where the models are saved
     home_dir = os.path.expanduser('~')
     pkg_dir = 'ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'best_model.zip')
+    trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_4.zip')
 
     # Register the gym environment
     register(
@@ -44,7 +44,7 @@ def main(args=None):
     model = PPO.load(trained_model_path, env=env)
 
     # Evaluating the trained agent
-    Mean_ep_rew, Num_steps = evaluate_policy(model, env=env, n_eval_episodes=10, return_episode_rewards=True, deterministic=True)
+    Mean_ep_rew, Num_steps = evaluate_policy(model, env=env, n_eval_episodes=20, return_episode_rewards=True, deterministic=True)
 
     node.get_logger().info("Mean Reward: " + str(np.mean(Mean_ep_rew)) + " - Std Reward: " + str(np.std(Mean_ep_rew)))
     node.get_logger().info("Max Reward: " + str(np.max(Mean_ep_rew)) + " - Min Reward: " + str(np.min(Mean_ep_rew)))

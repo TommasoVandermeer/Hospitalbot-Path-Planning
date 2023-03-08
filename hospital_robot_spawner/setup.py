@@ -55,8 +55,6 @@ setup(
           'spawn_demo = hospital_robot_spawner.spawn_demo:main',
           'start_training = hospital_robot_spawner.start_training:main',
           'trained_agent = hospital_robot_spawner.trained_agent:main',
-          'reset_node = hospital_robot_spawner.reset_node:main',
-          'spawn_target = hospital_robot_spawner.spawn_target:main',
         ],
     },
 )
