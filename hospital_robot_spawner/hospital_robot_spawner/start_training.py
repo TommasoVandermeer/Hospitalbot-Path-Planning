@@ -12,6 +12,7 @@ from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewar
 import os
 import optuna
 from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.monitor import Monitor
 
 class TrainingNode(Node):
 
@@ -56,6 +57,7 @@ def main(args=None):
 
     #env = NormalizeReward(gym.make('HospitalBotEnv-v0'))
     env = gym.make('HospitalBotEnv-v0')
+    env = Monitor(env)
 
     # Sample Observation and Action space for Debugging
     #node.get_logger().info("Observ sample: " + str(env.observation_space.sample()))
@@ -98,18 +100,18 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_3.zip')
+        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'best_model.zip')
         # Here we load the rained model
-        custom_obs = {'learning_rate': 0.00002}
+        custom_obs = {'learning_rate': 0.00001}
         model = PPO.load(trained_model_path, env=env, custom_objects=custom_obs)
         # Execute training
         try:
             model.learn(total_timesteps=int(15000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_4")
+            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_6")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_4")
+        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_6")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment

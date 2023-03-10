@@ -18,7 +18,7 @@
     <physics default="0" name="default_physics" type="ode">
       <max_step_size>0.01</max_step_size> <!-- Default: 0.001 -->
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>10000</real_time_update_rate> <!-- Default: 1000 -->
+      <real_time_update_rate>5000</real_time_update_rate> <!-- Default: 1000 - 0 gives highest real factor rate --> 
     </physics>
     <scene>
       <ambient>0.6 0.6 0.6 1</ambient>

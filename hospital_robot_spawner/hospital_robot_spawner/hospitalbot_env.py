@@ -50,7 +50,7 @@ class HospitalBotEnv(RobotController, Env):
         # 3: semi-randomize both robot position and target location
         # 4: semi-randomize both robot position and target location with obstacles (Door test)
         # 5: max randomization (both target and robot are reset in many locations at each episode)
-        self._randomize_env_level = 0
+        self._randomize_env_level = 5
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
@@ -85,7 +85,7 @@ class HospitalBotEnv(RobotController, Env):
 
         # Debug prints on console
         self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
-        self.get_logger().info("AGENT LOCATION: " + str(self._agent_location))
+        self.get_logger().info("AGENT LOCATION: " + str(self._initial_agent_location))
         self.get_logger().info("MAX LINEAR VEL: " + str(self._max_linear_velocity))
         self.get_logger().info("MIN LINEAR VEL: " + str(self._min_linear_velocity))
         self.get_logger().info("ANGULAR VEL: " + str(self._angular_velocity))
@@ -143,7 +143,7 @@ class HospitalBotEnv(RobotController, Env):
                           [-3.6, 10.9, 180, -1, 1.5, -1, 1, -15, 45],
                           [-1.6, -8.5, 0, -1, 1, -0.5, 0.5, -30, 30],
                           [5, -6, 90, -0.8, 0, -1, 1, -45, 45],
-                          [2.8, -15, -90, 0, 0, -0.5, 0, -15, 15]]
+                          [2.8, -14.5, -90, 0, 0, -0.2, 0, -15, 15]]
         
         # This variable defines all the possible locations where the target can spawn with a self._randomize_env_level of 5
         # Obviously these locations are strictly associated with the locations where the robot spawns
@@ -160,7 +160,7 @@ class HospitalBotEnv(RobotController, Env):
                           [0, 2, -3, 0, -1, 1],
                           [-7, 10.3, -0.5, 0.5, -0.5, 0.5],
                           [3.3, -8.6, -0.5, 0.5, -0.5, 0.5],
-                          [2.9, -3.5, 0, 0, -1, 1],
+                          [3, -3.5, 0, 0, -1, 1],
                           [1.5, -19, -0.1, 0.5, -1, 1]]
 
     def step(self, action):
@@ -456,8 +456,7 @@ class HospitalBotEnv(RobotController, Env):
     def close(self):
         ## Shuts down the node to avoid creating multiple nodes on re-creation of the env
         self.destroy_client(self.client_sim)
-        self.destroy_client(self.client_env)
-        self.destroy_client(self.client_target)
+        self.destroy_client(self.client_state)
         self.destroy_publisher(self.action_pub)
         self.destroy_subscription(self.pose_sub)
         self.destroy_subscription(self.laser_sub)
