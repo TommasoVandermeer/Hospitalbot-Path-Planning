@@ -20,7 +20,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "retraining"
+        self._training_mode = "random_agent"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -102,8 +102,8 @@ def main(args=None):
         # Path in which we find the model
         trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'best_model.zip')
         # Here we load the rained model
-        custom_obs = {'learning_rate': 0.00001}
-        model = PPO.load(trained_model_path, env=env, custom_objects=custom_obs)
+        custom_obj = {'learning_rate': 0.00001}
+        model = PPO.load(trained_model_path, env=env, custom_objects=custom_obj)
         # Execute training
         try:
             model.learn(total_timesteps=int(15000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
