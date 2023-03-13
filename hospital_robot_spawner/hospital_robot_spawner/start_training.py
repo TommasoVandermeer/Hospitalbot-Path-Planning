@@ -20,7 +20,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "random_agent"
+        self._training_mode = "retraining"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -100,7 +100,7 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'best_model.zip')
+        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_7.zip')
         # Here we load the rained model
         custom_obj = {'learning_rate': 0.00001}
         model = PPO.load(trained_model_path, env=env, custom_objects=custom_obj)
@@ -109,9 +109,9 @@ def main(args=None):
             model.learn(total_timesteps=int(15000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_6")
+            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_8")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_6")
+        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_8")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment
