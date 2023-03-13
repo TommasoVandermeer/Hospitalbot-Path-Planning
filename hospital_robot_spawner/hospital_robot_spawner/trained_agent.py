@@ -25,7 +25,7 @@ def main(args=None):
     # We get the dir where the models are saved
     home_dir = os.path.expanduser('~')
     pkg_dir = 'ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner'
-    trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'best_model.zip')
+    trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_6.zip')
 
     # Register the gym environment
     register(
