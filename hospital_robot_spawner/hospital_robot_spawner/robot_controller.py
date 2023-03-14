@@ -70,6 +70,7 @@ class RobotController(Node):
         self._agent_orientation = 2* math.atan2(msg.pose.pose.orientation.z, msg.pose.pose.orientation.w)
         #self.get_logger().info("Agent position: " + str(self._agent_location))
         #self.get_logger().info("Agent orientation: " + str(math.degrees(self._agent_orientation)))
+        self._done_pose = True
 
     # Method that saves the laser reads each time the topic /demo/laser/out receives a new message
     def laser_callback(self, msg: LaserScan):
@@ -77,6 +78,7 @@ class RobotController(Node):
         # Converts inf values to 10
         self._laser_reads[self._laser_reads == np.inf] = np.float32(10)
         #self.get_logger().info("Min Laser Read: " + str(min(self._laser_reads)))
+        self._done_laser = True
 
     # Method to set the state of the robot when an episode ends - /demo/set_entity_state service
     def call_set_robot_state_service(self, robot_pose=[1, 16, -0.707, 0.707]):

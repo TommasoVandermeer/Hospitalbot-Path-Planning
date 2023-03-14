@@ -40,7 +40,7 @@ class HospitalBotEnv(RobotController, Env):
         # ENVIRONMENT PARAMETERS
         self.robot_name = 'HospitalBot'
         # Initializes the Target location (x,y) - effective only for randomization level 0 and 1 (see below)
-        self._target_location = np.array([5, 0], dtype=np.float32) # Default is [1, 10]
+        self._target_location = np.array([5, -5], dtype=np.float32) # Default is [1, 10]
         # Initializes the starting agent location for each episode (x,y,angle) - effective only for randomization level 0 and 2 (see below)
         self._initial_agent_location = np.array([1, 16, -90], dtype=np.float32) # Default is [1, 16, -90]
         # Defines the level of randomization of the env, the more you randomize the more the model will be generalizable (no overfitting)
@@ -51,7 +51,7 @@ class HospitalBotEnv(RobotController, Env):
         # 4: semi-randomize both robot position and target location with obstacles (Door test)
         # 5: max randomization (both target and robot are reset in many locations at each episode)
         # 6: path planning mode (the robot has to reach several targets to complete the path)
-        self._randomize_env_level = 0
+        self._randomize_env_level = 5
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
@@ -67,9 +67,12 @@ class HospitalBotEnv(RobotController, Env):
         # Initializes the angular velocity used in actions - This must always be symmetric (no need for max and min)
         self._angular_velocity = 1
         # Initializes the min distance from target for which the episode is concluded with success
-        self._minimum_dist_from_target = 0.35
+        # This has to be at least 0.16 more than self._minimum_dist_from_obstacles
+        # Because the laser is positioned 0.15 meters further with respect to the center of the robot
+        self._minimum_dist_from_target = 0.41
         # Initializes the min distance from an obstacle for which the episode is concluded without success
-        self._minimum_dist_from_obstacles = 0.27
+        # This accounts for the front dimension of the robot - DO NOT CHANGE THIS
+        self._minimum_dist_from_obstacles = 0.25
         
         ## Adaptive heuristic parameters
         # Attraction threshold and factor for adaptive heuristic
@@ -85,8 +88,8 @@ class HospitalBotEnv(RobotController, Env):
         self._num_steps = 0
 
         # Debug prints on console
-        self.get_logger().info("TARGET LOCATION: " + str(self._target_location))
-        self.get_logger().info("AGENT LOCATION: " + str(self._initial_agent_location))
+        self.get_logger().info("INITIAL TARGET LOCATION: " + str(self._target_location))
+        self.get_logger().info("INITIAL AGENT LOCATION: " + str(self._initial_agent_location))
         self.get_logger().info("MAX LINEAR VEL: " + str(self._max_linear_velocity))
         self.get_logger().info("MIN LINEAR VEL: " + str(self._min_linear_velocity))
         self.get_logger().info("ANGULAR VEL: " + str(self._angular_velocity))
@@ -171,11 +174,11 @@ class HospitalBotEnv(RobotController, Env):
                                     [4, 5, -0.5, 0.5, -0.5, 0.5],
                                     [5, 0, -0.7, 1, -1, 1],
                                     [5, -5, -0.7, 1, -1, 1],
-                                    [3, -8.5, -1, 1, -0.5, 0.5],
+                                    [4, -8.5, -1, 1, -0.5, 0.5],
                                     [-3, -8.5, -1, 1, -0.5, 0.5],
                                     [-5, -13, -0.5, 0.5, -1, 1],
                                     [-5, -17.5, -0.5, 0.5, -1, 1],
-                                    [-4.5, -25, 0, 1, 0, 0],
+                                    [-4, -25, -1, 0, 0, 0],
                                     [-9, -26, -1, 1, -0.5, 0.5],
                                     [-7.5, -31, 0, 0, -0.5, 0.5],
                                     [-7.5, -34, -1, 1, -0.5, 0.5],
@@ -201,8 +204,6 @@ class HospitalBotEnv(RobotController, Env):
         self.send_velocity_command(action)
 
         # Spin the node until laser reads and agent location are updated - VERY IMPORTANT
-        self._previous_agent_location = self._agent_location
-        self._previous_laser_reads = self._laser_reads
         self.spin()
 
         # Compute the polar coordinates of the robot with respect to the target
@@ -273,8 +274,6 @@ class HospitalBotEnv(RobotController, Env):
             self.call_set_target_state_service(self._target_location)
 
         # Compute the initial observation
-        self._previous_agent_location = self._agent_location
-        self._previous_laser_reads = self._laser_reads
         self.spin()
         self.transform_coordinates()
 
@@ -309,7 +308,9 @@ class HospitalBotEnv(RobotController, Env):
 
     def spin(self):
         # This function spins the node until it gets new sensor data (executes both laser and odom callbacks)
-        while np.array_equal(self._laser_reads, self._previous_laser_reads) or np.array_equal(self._agent_location, self._previous_agent_location):
+        self._done_pose = False
+        self._done_laser = False
+        while (self._done_pose == False) or (self._done_laser == False):
             rclpy.spin_once(self)
 
     def transform_coordinates(self):
@@ -367,7 +368,7 @@ class HospitalBotEnv(RobotController, Env):
 
         # RANDOM LEVEL 6 - Path planning mode
         if (self._randomize_env_level == 6):
-            # The location is already set
+            # The new waypoint is already set
             self._target_location = np.array([self.waypoints_locations[self._which_waypoint][0], self.waypoints_locations[self._which_waypoint][1]], dtype=np.float32) # Base position
             self._target_location[0] += np.float32(np.random.rand(1)*(self.waypoints_locations[self._which_waypoint][3]-self.waypoints_locations[self._which_waypoint][2]) + self.waypoints_locations[self._which_waypoint][2]) # Random contr. on target x
             self._target_location[1] += np.float32(np.random.rand(1)*(self.waypoints_locations[self._which_waypoint][5]-self.waypoints_locations[self._which_waypoint][4]) + self.waypoints_locations[self._which_waypoint][4]) # Random contr. on target y
@@ -441,11 +442,11 @@ class HospitalBotEnv(RobotController, Env):
                 #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
             elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
                 # If the agent hits an abstacle it gets a negative reward
-                reward = -1000
+                reward = -1
                 self.get_logger().info("HIT AN OBSTACLE")
             else:
                 # Otherwise the episode continues
-                reward = -1
+                reward = -0.001
 
         ## Heuristic with Adaptive Exploration Strategy
         elif self._reward_method == 2:
