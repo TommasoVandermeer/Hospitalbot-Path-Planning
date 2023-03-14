@@ -32,7 +32,7 @@ def main(args=None):
         id="HospitalBotEnv-v0",
         entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
         #entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
-        max_episode_steps=300,
+        max_episode_steps=3000,
     )
 
     env = gym.make('HospitalBotEnv-v0')
