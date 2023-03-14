@@ -69,7 +69,7 @@ def main(args=None):
 
     # Now we create two callbacks which will be executed during training
     stop_callback = StopTrainingOnRewardThreshold(reward_threshold=900, verbose=1)
-    eval_callback = EvalCallback(env, callback_on_new_best=stop_callback, eval_freq=100000, best_model_save_path=trained_models_dir, n_eval_episodes=30)
+    eval_callback = EvalCallback(env, callback_on_new_best=stop_callback, eval_freq=100000, best_model_save_path=trained_models_dir, n_eval_episodes=40)
     
     if node._training_mode == "random_agent":
         # N° Episodes
@@ -100,18 +100,18 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_7.zip')
+        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_6.zip')
         # Here we load the rained model
-        custom_obj = {'learning_rate': 0.00001}
+        custom_obj = {'learning_rate': 0.00001, 'ent_coef': 0.0004}
         model = PPO.load(trained_model_path, env=env, custom_objects=custom_obj)
         # Execute training
         try:
-            model.learn(total_timesteps=int(15000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
+            model.learn(total_timesteps=int(20000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_8")
+            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_7")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_8")
+        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_7")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment
