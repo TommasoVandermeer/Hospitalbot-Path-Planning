@@ -69,10 +69,10 @@ class HospitalBotEnv(RobotController, Env):
         # Initializes the min distance from target for which the episode is concluded with success
         # This has to be at least 0.16 more than self._minimum_dist_from_obstacles
         # Because the laser is positioned 0.15 meters further with respect to the center of the robot
-        self._minimum_dist_from_target = 0.41
+        self._minimum_dist_from_target = 0.42
         # Initializes the min distance from an obstacle for which the episode is concluded without success
         # This accounts for the front dimension of the robot - DO NOT CHANGE THIS
-        self._minimum_dist_from_obstacles = 0.25
+        self._minimum_dist_from_obstacles = 0.26
         
         ## Adaptive heuristic parameters
         # Attraction threshold and factor for adaptive heuristic
