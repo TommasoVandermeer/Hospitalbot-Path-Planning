@@ -386,7 +386,7 @@ class HospitalBotEnv(RobotController, Env):
         if (self._randomize_env_level == 0) or (self._randomize_env_level == 2):
             position_x = float(self._initial_agent_location[0])
             position_y = float(self._initial_agent_location[1])
-            angle = float(self._initial_agent_location[2])
+            angle = float(math.radians(self._initial_agent_location[2]))
             orientation_z = float(math.sin(angle/2))
             orientation_w = float(math.cos(angle/2))
 
