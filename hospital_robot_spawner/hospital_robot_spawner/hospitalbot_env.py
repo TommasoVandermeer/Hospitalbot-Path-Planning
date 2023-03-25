@@ -40,7 +40,7 @@ class HospitalBotEnv(RobotController, Env):
         # ENVIRONMENT PARAMETERS
         self.robot_name = 'HospitalBot'
         # Initializes the Target location (x,y) - effective only for randomization level 0 and 1 (see below)
-        self._target_location = np.array([5, -5], dtype=np.float32) # Default is [1, 10]
+        self._target_location = np.array([-3, 10], dtype=np.float32) # Default is [1, 10]
         # Initializes the starting agent location for each episode (x,y,angle) - effective only for randomization level 0 and 2 (see below)
         self._initial_agent_location = np.array([1, 16, -90], dtype=np.float32) # Default is [1, 16, -90]
         # Defines the level of randomization of the env, the more you randomize the more the model will be generalizable (no overfitting)
@@ -51,7 +51,7 @@ class HospitalBotEnv(RobotController, Env):
         # 4: semi-randomize both robot position and target location with obstacles (Door test)
         # 5: max randomization (both target and robot are reset in many locations at each episode)
         # 6: path planning mode (the robot has to reach several targets to complete the path)
-        self._randomize_env_level = 5
+        self._randomize_env_level = 0
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
@@ -209,6 +209,9 @@ class HospitalBotEnv(RobotController, Env):
         # Compute the polar coordinates of the robot with respect to the target
         self.transform_coordinates()
 
+        # This is used to overwrite laser reads and see how the agent behaves when all laser samples have max value
+        #self._laser_reads = np.full((61,),10, dtype=np.float32)
+
         # Update robot location and laser reads
         observation = self._get_obs()
         #self.get_logger().info(str(observation["laser"]))
@@ -276,6 +279,9 @@ class HospitalBotEnv(RobotController, Env):
         # Compute the initial observation
         self.spin()
         self.transform_coordinates()
+
+        # This is used to overwrite laser reads and see how the agent behaves when all laser samples have max value
+        #self._laser_reads = np.full((61,),10, dtype=np.float32)
 
         # Updates state and additional infos
         observation = self._get_obs()
