@@ -111,7 +111,7 @@ class HospitalBotSimpleEnv(RobotController, Env):
     def reset(self, seed=None, options=None):
         #self.get_logger().info("Resetting the environment")
 
-        angle = float(-90)
+        angle = float(math.radians(-90))
         orientation_z = float(math.sin(angle/2))
         orientation_w = float(math.cos(angle/2))
 
