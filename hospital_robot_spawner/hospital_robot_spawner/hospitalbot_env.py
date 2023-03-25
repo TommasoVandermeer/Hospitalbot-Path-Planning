@@ -51,13 +51,13 @@ class HospitalBotEnv(RobotController, Env):
         # 4: semi-randomize both robot position and target location with obstacles (Door test)
         # 5: max randomization (both target and robot are reset in many locations at each episode)
         # 6: path planning mode (the robot has to reach several targets to complete the path)
-        self._randomize_env_level = 0
+        self._randomize_env_level = 5
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
-        self._visualize_target = True
+        self._visualize_target = False
         # 0: simple reward, 1: heuristic, 2: adaptive heuristic (Checkout the method compute_reward)
         self._reward_method = 0
         # Initializes the maximal linear velocity used in actions
@@ -428,7 +428,7 @@ class HospitalBotEnv(RobotController, Env):
         if self._reward_method == 0:
             if (info["distance"] < self._minimum_dist_from_target):
                 # If the agent reached the target it gets a positive reward
-                reward = 1
+                reward = 10
                 self.get_logger().info("TARGET REACHED")
                 #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
             elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
