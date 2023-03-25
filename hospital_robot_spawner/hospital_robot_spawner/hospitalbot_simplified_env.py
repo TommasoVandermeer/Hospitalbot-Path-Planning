@@ -42,6 +42,8 @@ class HospitalBotSimpleEnv(RobotController, Env):
         self._target_location = np.array([1, 12], dtype=np.float32) # Training [1, 12]
         # If True, at each episode, the target location is set randomly, otherwise it is fixed
         self._randomize_target = False
+        # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
+        self._visualize_target = True
         # Initializes the linear velocity used in actions
         self._linear_velocity = 1
         # Initializes the angular velocity used in actions
@@ -62,6 +64,10 @@ class HospitalBotSimpleEnv(RobotController, Env):
         self.get_logger().info("MIN TARGET DIST: " + str(self._minimum_dist_from_target))
         self.get_logger().info("TARGET RANGE: " + str(self._target_range))
 
+        # Warning for training
+        if self._visualize_target == True:
+            self.get_logger().info("WARNING! TARGET VISUALIZATION IS ACTIVATED, SET IT FALSE FOR TRAINING")
+
         # Action space - It is a 2D continuous space - Linear velocity, Angular velocity
         self.action_space = Box(low=np.array([0, -self._angular_velocity]), high=np.array([self._linear_velocity, self._angular_velocity]), dtype=np.float32)
 
@@ -79,7 +85,6 @@ class HospitalBotSimpleEnv(RobotController, Env):
         self.send_velocity_command(action)
 
         # Spin the node until laser reads and agent location are updated - VERY IMPORTANT
-        self._previous_agent_location = self._agent_location
         self.spin()
 
         # Compute the polar coordinates of the robot with respect to the target
@@ -106,25 +111,29 @@ class HospitalBotSimpleEnv(RobotController, Env):
     def reset(self, seed=None, options=None):
         #self.get_logger().info("Resetting the environment")
 
+        angle = float(-90)
+        orientation_z = float(math.sin(angle/2))
+        orientation_w = float(math.cos(angle/2))
+
+        pose2d = np.array([1, 15, orientation_z, orientation_w], dtype=np.float32)
+
         # Reset the done reset variable
-        self._done_reset_sim = False
-        self._done_reset_env = False
-        # Calls the reset simulation service
-        self.call_reset_simulation_service()
-        # Here we spin the node until the /reset_simulation service responds, otherwise we get random observations
-        while self._done_reset_sim == False:
-            rclpy.spin_once(self)
-        self.call_reset_environment_service()
-        # Here we spin the node until the /reset_environment service responds, otherwise we get random observations
-        while self._done_reset_env == False:
+        self._done_set_rob_state = False
+        # Call the set robot position service
+        self.call_set_robot_state_service(pose2d)
+        # Here we spin the node until the /set_entity_state service responds, otherwise we get random observations
+        while self._done_set_rob_state == False:
             rclpy.spin_once(self)
 
         # Randomize target location+
         if self._randomize_target == True:
             self.randomize_target_location()
 
+        # Here we set the new target position for visualization
+        if self._visualize_target == True:
+            self.call_set_target_state_service(self._target_location)
+
         # Compute the initial observation
-        self._previous_agent_location = self._agent_location
         self.spin()
         self.transform_coordinates()
 
@@ -153,7 +162,9 @@ class HospitalBotSimpleEnv(RobotController, Env):
 
     def spin(self):
         # This function spins the node until it gets new sensor data (executes both laser and odom callbacks)
-        while np.array_equal(self._agent_location, self._previous_agent_location):
+        self._done_pose = False
+        self._done_laser = False
+        while (self._done_pose == False) or (self._done_laser == False):
             rclpy.spin_once(self)
 
     def transform_coordinates(self):
