@@ -58,8 +58,8 @@ class HospitalBotEnv(RobotController, Env):
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
         self._visualize_target = False
-        # 0: simple reward, 1: heuristic, 2: adaptive heuristic (Checkout the method compute_reward)
-        self._reward_method = 0
+        # 0: simple reward, 1: risk seeker, 2: adaptive heuristic (Checkout the method compute_reward)
+        self._reward_method = 1
         # Initializes the maximal linear velocity used in actions
         self._max_linear_velocity = 1
         # Initializes the minimal linear velocity used in actions
@@ -136,36 +136,62 @@ class HospitalBotEnv(RobotController, Env):
         # [x, y, angle, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound, angle_lowerbound, angle_upperbound]
         # x, y and angle defines the center of the location and the orientation, the bounds define the limits from the center in which the robot will spawn
         self.robot_locations = [[1, 16, -90, -1, 1, -0.5, 0.5, -30, 30],
+                          [1, 10, 90, -3, 3, -1, 1, -30, 30],
                           [11, 13, 180, -1, 1, -0.25, 0.25, -30, 30],
+                          [6.7, 13, 45, -0.1, 0.1, -0.1, 0.5, -15, 15],
                           [11.5, 5.7, 180,-0.2, 0.2, -0.1, 0.1, 0, 30],
+                          [7.5, 4.8, 0, -1, 0.5, -0.1, 0.1, -15, 15],
                           [7.7, -8, 90, -0.5, 0.5, -1.5, 1.5, -30, 30],
+                          [10, -2.1, 180, -0.5, 0.5, 0, 0, -10, 10],
                           [-2.3, -30.5, 90, -0.2, 0.5, -0.5, 1.5, -20, 45],
+                          [4, -27.4, 180, -2, 2, -1, 0.7, -30, 30],
                           [-7.7, -30.8, 90, -0.2, 0.2, -0.5, 1, -20, 20],
+                          [-9.7, -26, -30, -1, 0.2, -0.5, 0.5, -20, 20],
                           [-2.1, -24.6, 180, -1, 1, -0.3, 0.3, -45, 30],
+                          [-5, -21, -90, -1, 1, -0.5, 2, -30, 30],
                           [-5, -6.6, 90, -0.5, 0.5, -1, 1, -30, 30],
+                          [-3.2, -2.9, 180, -0.5, 0, -1, 0.2, -20, 20],
                           [-5, 4, -90, -0.5, 0.5, -1, 1, -30, 30],
+                          [-2.2, 1, 180, -0.5, 2, -0.2, 0.5, -30, 30],
                           [-3.6, 10.9, 180, -1, 1.5, -1, 1, -15, 45],
+                          [-7.4, 10.4, 0, -0.1, 1, -0.7, 0.7, -30, 30],
                           [-1.6, -8.5, 0, -1, 1, -0.5, 0.5, -30, 30],
+                          [3.3, -8.6, 180, -0.2, 1, -0.5, 0.5, -30, 30],
                           [5, -6, 90, -0.8, 0, -1, 1, -45, 45],
-                          [2.8, -14.5, -90, 0, 0, -0.2, 0, -15, 15]]
+                          [3.2, -2.8, -30, 0, 1, -1, 0, -15, 15],
+                          [2.8, -14.5, -90, 0, 0, -0.2, 0, -15, 15],
+                          [1.7, -19, 90, 0, 0.5, -0.2, 0.5, -15, 15]]
         
         # This variable defines all the possible locations where the target can spawn with a self._randomize_env_level of 5
         # Obviously these locations are strictly associated with the locations where the robot spawns
         # [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
         # x and y defines the center of the location, the bounds define the limits from the center in which the target will spawn
         self.target_locations = [[1, 10, -3, 3, -1, 3],
+                          [1, 16, -1, 1, -1, 1],
                           [6.7, 12, -0.1, 0.1, -0.5, 2],
+                          [11, 13, -0.5, 0.5, -0.2, 0.2],
                           [8, 4.8, -1.5, 1.5, -0.1, 0.1],
+                          [11.3, 5.5, -0.3, 0.3, -0.2, 0.2],
                           [10.8, -2.1, -1, 1, -0.1, 0.1],
+                          [8.3, -6.8, -0.5, 0.5, -1, 1],
                           [4.3, -27.6, -2, 0.5, -0.5, 0.5],
+                          [-2, -29.8, -0.5, 0.5, -1, 1],
                           [-10.5, -26.3, -0.2, 1, -1, 1],
+                          [-7.7, -30, -0.8, 0.8, -1, 1],
                           [-5, -21, -1, 1, -2.5, 0.5],
+                          [-1.5, -24.3, -1, 1, -1, 1],
                           [-3.1, -3.5, -0.1, 0.1, -1, 1],
+                          [-5.2, -7, -0.9, 1, -2, 2],
                           [0, 2, -3, 0, -1, 1],
+                          [-4.5, 4, -0.5, 0.5, -1, 1],
                           [-7, 10.3, -0.5, 0.5, -0.5, 0.5],
+                          [-2.6, 10.3, -0.5, 2, -2, 2],
                           [3.3, -8.6, -0.5, 0.5, -0.5, 0.5],
+                          [-1, -8.5, -1, 0, -0.2, 0.2],
                           [3, -3.5, 0, 0, -1, 1],
-                          [1.5, -19, -0.1, 0.5, -1, 1]]
+                          [4.6, -6.4, -0.5, 0.5, -1, 1],
+                          [1.5, -19, -0.1, 0.5, -1, 1],
+                          [2.8, -15.4, 0, 0, -0.5, 0.5]]
         
         # This variable defines all the possible waypoints that can build the path
         # [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
@@ -428,7 +454,7 @@ class HospitalBotEnv(RobotController, Env):
         if self._reward_method == 0:
             if (info["distance"] < self._minimum_dist_from_target):
                 # If the agent reached the target it gets a positive reward
-                reward = 10
+                reward = 1
                 self.get_logger().info("TARGET REACHED")
                 #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
             elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
@@ -439,20 +465,20 @@ class HospitalBotEnv(RobotController, Env):
                 # Otherwise the episode continues
                 reward = 0
 
-        ## Heuristic reward
+        # Risk seeker reward
         elif self._reward_method == 1:
             if (info["distance"] < self._minimum_dist_from_target):
                 # If the agent reached the target it gets a positive reward
-                reward = 0
+                reward = 1
                 self.get_logger().info("TARGET REACHED")
                 #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
             elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
                 # If the agent hits an abstacle it gets a negative reward
-                reward = -1
+                reward = -0.1
                 self.get_logger().info("HIT AN OBSTACLE")
             else:
                 # Otherwise the episode continues
-                reward = -0.001
+                reward = 0
 
         ## Heuristic with Adaptive Exploration Strategy
         elif self._reward_method == 2:
