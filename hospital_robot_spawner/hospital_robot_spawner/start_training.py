@@ -90,7 +90,7 @@ def main(args=None):
         model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir, n_steps=20480, gamma=0.9880614935504514, gae_lambda=0.9435887928788405, ent_coef=0.00009689939917928778, vf_coef=0.6330533453055319, learning_rate=0.00001177011863371444, clip_range=0.1482)
         # Execute training
         try:
-            model.learn(total_timesteps=int(50000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_risk_seeker")
+            model.learn(total_timesteps=int(40000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_risk_seeker")
         except KeyboardInterrupt:
             model.save(f"{trained_models_dir}/PPO_risk_seeker")
         # Save the trained model
@@ -100,18 +100,18 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_with_obstacles_retrained_4.zip')
+        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'best_model.zip')
         # Here we load the rained model
-        custom_obj = {'learning_rate': 0.00001, 'ent_coef': 0.0004}
+        custom_obj = {'action_space': env.action_space, 'observation_space': env.observation_space}
         model = PPO.load(trained_model_path, env=env)#, custom_objects=custom_obj)
         # Execute training
         try:
-            model.learn(total_timesteps=int(20000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_with_obstacles_2")
+            model.learn(total_timesteps=int(20000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_risk_seeker")
         except KeyboardInterrupt:
             # If you notice that the training is sufficiently well interrupt to save
-            model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_4b")
+            model.save(f"{trained_models_dir}/PPO_risk_seeker_2")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_with_obstacles_retrained_4b")
+        model.save(f"{trained_models_dir}/PPO_risk_seeker_2")
 
     elif node._training_mode == "hyperparam_tuning":
         # Delete previously created environment
