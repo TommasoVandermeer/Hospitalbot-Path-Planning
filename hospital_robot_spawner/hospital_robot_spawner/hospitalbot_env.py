@@ -50,16 +50,18 @@ class HospitalBotEnv(RobotController, Env):
         # 3: semi-randomize both robot position and target location
         # 4: semi-randomize both robot position and target location with obstacles (Door test)
         # 5: max randomization (both target and robot are reset in many locations at each episode)
-        # 6: path planning mode (the robot has to reach several targets to complete the path)
-        self._randomize_env_level = 5
+        # 6: short-range targets evaluation mode (similar to max randomization but with new locations)
+        # 6.5: long-range targets evaluation mode
+        # 7: path planning evaluation mode (the robot has to reach several targets to complete the path)
+        self._randomize_env_level = 6
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
         self._normalize_act = True
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
-        self._visualize_target = False
+        self._visualize_target = True
         # 0: simple reward, 1: risk seeker, 2: adaptive heuristic (Checkout the method compute_reward)
-        self._reward_method = 1
+        self._reward_method = 0
         # Initializes the maximal linear velocity used in actions
         self._max_linear_velocity = 1
         # Initializes the minimal linear velocity used in actions
@@ -86,6 +88,13 @@ class HospitalBotEnv(RobotController, Env):
 
         # Initialize step count
         self._num_steps = 0
+
+        # Initialize episode count
+        self._num_episodes = 0
+
+        # If we are evaluating the model, we want to set the SEED
+        if (self._randomize_env_level >= 6):
+            np.random.seed(4)
 
         # Debug prints on console
         self.get_logger().info("INITIAL TARGET LOCATION: " + str(self._target_location))
@@ -196,25 +205,127 @@ class HospitalBotEnv(RobotController, Env):
         # This variable defines all the possible waypoints that can build the path
         # [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
         # x and y defines the center of the location, the bounds define the limits from the center in which the target will spawn
-        self.waypoints_locations = [[2, 10, -2, 2, -1, 1],
-                                    [4, 5, -0.5, 0.5, -0.5, 0.5],
-                                    [5, 0, -0.7, 1, -1, 1],
-                                    [5, -5, -0.7, 1, -1, 1],
-                                    [4, -8.5, -1, 1, -0.5, 0.5],
-                                    [-3, -8.5, -1, 1, -0.5, 0.5],
-                                    [-5, -13, -0.5, 0.5, -1, 1],
-                                    [-5, -17.5, -0.5, 0.5, -1, 1],
-                                    [-4, -25, -1, 0, 0, 0],
-                                    [-9, -26, -1, 1, -0.5, 0.5],
-                                    [-7.5, -31, 0, 0, -0.5, 0.5],
-                                    [-7.5, -34, -1, 1, -0.5, 0.5],
-                                    [-2, -33.5, -1, 1, -0.5, 0.5],
-                                    [2, -33.5, -1, 1, -0.5, 0.5],
-                                    [6, -33.5, -1, 1, -0.5, 0.5],
-                                    [10, -33.5, -1, 1, -0.5, 0.5]]
+        self.waypoints_locations = [
+            # First path
+            [
+                [2, 10, -2, 2, -1, 1],
+                [4, 5, -0.5, 0.5, -0.5, 0.5],
+                [5, 0, -0.7, 1, -1, 1],
+                [5, -5, -0.7, 1, -1, 1],
+                [4, -8.5, -1, 1, -0.5, 0.5],
+                [-3, -8.5, -1, 1, -0.5, 0.5],
+                [-5, -13, -0.5, 0.5, -1, 1],
+                [-5, -17.5, -0.5, 0.5, -1, 1],
+                [-4, -25, -1, 0, 0, 0],
+                [-9, -26, -1, 1, -0.5, 0.5],
+                [-7.5, -31, 0, 0, -0.5, 0.5],
+                [-7.5, -34, -1, 1, -0.5, 0.5],
+                [-2, -33.5, -1, 1, -0.5, 0.5],
+                [2, -33.5, -1, 1, -0.5, 0.5],
+                [6, -33.5, -1, 1, -0.5, 0.5],
+                [10, -33.5, -1, 1, -0.5, 0.5]
+            ],
+            # Second path
+            [
+                [-1.6, 11, -2, 2, -1, 1],
+                [-3.3, 6, -0.5, 0.5, -0.5, 0.5],
+                [-4.7, 3, -0.5, 0.5, -0.2, 1],
+                [-5, -1.6, -0.5, 0.5, -0.5, 0.5],
+                [-5.1, -6.6, -0.5, 0.5, -1, 1],
+                [-4.8, -9.7, -0.7, 0.7, -1, 1],
+                [-3.5, -14.6, -1, 1, -1, 1],
+                [1.8, -14.5, -1, 1, -1, 1],
+                [5, -16.9, -0.5, 0.5, -0.5, 0.5],
+                [4.8, -23.1, -0.2, 0.2, -0.2, 0.2],
+                [8.8, -22.9, 0, 0, -0.1, 0.3],
+                [8.5, -16.7, -1, 1, -0.5, 0.5],
+                [8.8, -22.9, 0, 0, -0.1, 0.3],
+                [4.8, -23.1, -0.2, 0.2, -0.2, 0.2],
+                [5.4, -27.7, -1, 1, -0.5, 0.5],
+                [-1.8, -27.7, -1, 1, -0.5, 0.5]
+            ],
+            # Third path
+            [
+                [4.1, 11.9, -1, 1, -1, 1],
+                [3.1, 7.1, -0.5, 0.5, -0.5, 0.5],
+                [5.1, 2.7, -0.5, 0.5, -0.5, 0.5],
+                [0.2, 1.2, -0.5, 0.5, -0.5, 0.5],
+                [-4.1, 1, 0, 0, 0, 0],
+                [-5, -1.6, -0.5, 0.5, -0.5, 0.5],
+                [-3.5, -3.5, -0.5, 0.1, -1, 1],
+                [-4.8, -6, -0.5, 0.5, -1, 1],
+                [-4.9, -9, -1, 0, 0, 0],
+                [-4.9, -13.5, -0.5, 0.5, -0.5, 0.5],
+                [-1.6, -14.5, -1, 1, -0.5, 0.5],
+                [5.1, -14.5, -1, 1, -0.5, 0.5],
+                [4.9, -24.5, -1, 1, -0.5, 0.5],
+                [0, -24.6, -1, 1, -0.5, 0.5],
+                [-4.9, -28.8, -0.5, 0.5, -0.5, 0.5],
+                [-4.9, -33.8, -1, 1, -0.5, 0.5]
+            ]
+        ]
+
+        # Evaluation locations for short-range targets
+        # robot locations: [x, y, angle, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound, angle_lowerbound, angle_upperbound]
+        # target locations: [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
+        self.eval_locations = [
+            # Robot Locations
+            [
+                [-4.3, 13.2, -45, -1, 1, -0.5, 0.5, -30, 30],
+                [-7.5, 4.8, 180, -0.2, 0.2, -0.1, 0.1, -5, 5],
+                [-2.7, 2.1, -90, -0.2, 0.2, -0.1, 0.1, -10, 10],
+                [-3, 1.5, 0, -1, 1, -0.5, 0.5, -30, 30],
+                [-8, -6.8, 90, -1, 1, -1, 1, -10, 10],
+                [-4.7, -5.1, -90, -0.5, 0.5, -1, 1, -15, 15],
+                [7.3, -23, 45, -0.1, 0.1, -0.1, 0.1, -15, 15],
+                [11, -33.4, 180, -0.5, 0.5, -0.7, 0.7, -15, 15],
+                [-5.5, -29.8, -90, -0.2, 0.2, -1, 1, -10, 10],
+                [1.2, -4.5, 70, -0.5, 0.1, 0, 0.3, 0, 20]
+            ],
+            # Target Locations
+            [
+                [-3, 9, -1.2, 1.2, -2, 2],
+                [-10.8, 5.7, -0.1, 0.1, -0.1, 0.1],
+                [-2.8, -1, -0.1, 0.1, -0.1, 0.1],
+                [3, 1.3, -1.5, 1.5, -1, 1],
+                [-9, -0.3, -0.2, 0.2, -0.5, 0.5],
+                [-1.5, -8, -2, 1, -0.5, 0.5],
+                [11, -19.8, -0.2, 0.2, -0.1, 0.1],
+                [5.4, -34, -2, 2, -0.5, 1],
+                [-9, -33.4, -1, 1, -0.3, 0],
+                [1.1, -1.5, -0.5, 0.5, -0.5, 0]
+            ],
+        ]
+
+        # Evaluation locations for long-range targets
+        # robot locations: [x, y, angle, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound, angle_lowerbound, angle_upperbound]
+        # target locations: [x, y, x_lowerbound, x_upperbound, y_lowerbound, y_upperbound]
+        self.eval_locations_lr = [
+            # Robot Locations
+            [
+                [1, 16, -90, -1, 1, -0.5, 0.5, -30, 30],
+                [1, 16, -90, -1, 1, -0.5, 0.5, -30, 30],
+                [-10.9, -33.5, 0, -1, 1, -0.5, 0.5, -15, 15],
+                [3.7, -24.4, 45, -0.1, 1, -0.5, 0.5, -30, 30],
+                [5.2, -11.7, -90, -0.5, 0.5, -1, 1, -15, 15],
+            ],
+            # Target Locations
+            [
+                [5, -2, -0.5, 0.5, -2, 2],
+                [-4.3, 0.5, -0.1, 0.1, -2, 2],
+                [6.8, -33.6, -2, 2, -0.5, 0.5],
+                [5.2, -11.7, -0.5, 0.5, -1, 1],
+                [-4.2, -14.5, -1, 1, -0.5, 0.5],
+            ],
+        ]
 
         # This variable takes into account which point in the path the robot has to reach
         self._which_waypoint = 0
+
+        # Variables to montior successes and failures
+        self._successes = 0
+        self._failures = 0
+        self._completed_paths = 0
 
     def step(self, action):
 
@@ -247,13 +358,17 @@ class HospitalBotEnv(RobotController, Env):
         # Compute Reward
         reward = self.compute_rewards(info)
 
+        # Compute statistics for evaluation
+        if (self._randomize_env_level >= 6):
+            self.compute_statistics(info)
+
         # Check if episode is terminated
-        if (self._randomize_env_level <= 5):
-            # RANDOM LEVEL 1,2,3,4,5: Once the robot reaches the target or crashes into an obstacle the episode finishes
+        if (self._randomize_env_level <= 6.5):
+            # RANDOM LEVEL 1,2,3,4,5,6,6.5: Once the robot reaches the target or crashes into an obstacle the episode finishes
             done = (info["distance"] < self._minimum_dist_from_target) or (any(info["laser"] < self._minimum_dist_from_obstacles))
         else:
-            # RANDOM LEVEL 6: Here the robot has to reach the target several times following a pre-determined path
-            if (self._which_waypoint == len(self.waypoints_locations)-1):
+            # RANDOM LEVEL 7: Here the robot has to reach the target several times following a pre-determined path
+            if (self._which_waypoint == len(self.waypoints_locations[0])-1):
                 done = (info["distance"] < self._minimum_dist_from_target) or (any(info["laser"] < self._minimum_dist_from_obstacles))
             else:
                 done = (any(info["laser"] < self._minimum_dist_from_obstacles))
@@ -280,6 +395,9 @@ class HospitalBotEnv(RobotController, Env):
     def reset(self, seed=None, options=None):
         #self.get_logger().info("Resetting the environment")
 
+        # Increment episode counter
+        self._num_episodes += 1
+
         # Get the new pose of the robot
         pose2d = self.randomize_robot_location()
         
@@ -291,7 +409,9 @@ class HospitalBotEnv(RobotController, Env):
         while self._done_set_rob_state == False:
             rclpy.spin_once(self)
         
-        # Set waypoint back to 0 - ONLY VALID FOR RANDOM LEVEL 6
+        # Randomly pick new path - ONLY VALID FOR RANDOM LEVEL 7
+        self._path = np.random.randint(0,len(self.waypoints_locations))
+        # Set waypoint back to 0 - ONLY VALID FOR RANDOM LEVEL 7
         self._which_waypoint = 0
 
         if (self._randomize_env_level >= 2):
@@ -398,12 +518,26 @@ class HospitalBotEnv(RobotController, Env):
             self._target_location[0] += np.float32(np.random.rand(1)*(self.target_locations[self._location][3]-self.target_locations[self._location][2]) + self.target_locations[self._location][2]) # Random contr. on target x
             self._target_location[1] += np.float32(np.random.rand(1)*(self.target_locations[self._location][5]-self.target_locations[self._location][4]) + self.target_locations[self._location][4]) # Random contr. on target y
 
-        # RANDOM LEVEL 6 - Path planning mode
+        # RANDOM LEVEL 6 - Short-range targets Evaluation mode
         if (self._randomize_env_level == 6):
+            # The location was already chosen in randomize_robot_location
+            self._target_location = np.array([self.eval_locations[1][self._location][0], self.eval_locations[1][self._location][1]], dtype=np.float32) # Base position
+            self._target_location[0] += np.float32(np.random.rand(1)*(self.eval_locations[1][self._location][3]-self.eval_locations[1][self._location][2]) + self.eval_locations[1][self._location][2]) # Random contr. on target x
+            self._target_location[1] += np.float32(np.random.rand(1)*(self.eval_locations[1][self._location][5]-self.eval_locations[1][self._location][4]) + self.eval_locations[1][self._location][4]) # Random contr. on target y
+
+        # RANDOM LEVEL 6.5 - Long-range targets Evaluation mode
+        if (self._randomize_env_level == 6.5):
+            # The location was already chosen in randomize_robot_location
+            self._target_location = np.array([self.eval_locations_lr[1][self._location][0], self.eval_locations_lr[1][self._location][1]], dtype=np.float32) # Base position
+            self._target_location[0] += np.float32(np.random.rand(1)*(self.eval_locations_lr[1][self._location][3]-self.eval_locations_lr[1][self._location][2]) + self.eval_locations_lr[1][self._location][2]) # Random contr. on target x
+            self._target_location[1] += np.float32(np.random.rand(1)*(self.eval_locations_lr[1][self._location][5]-self.eval_locations_lr[1][self._location][4]) + self.eval_locations_lr[1][self._location][4]) # Random contr. on target y
+
+        # RANDOM LEVEL 7 - Path planning mode
+        if (self._randomize_env_level == 7):
             # The new waypoint is already set
-            self._target_location = np.array([self.waypoints_locations[self._which_waypoint][0], self.waypoints_locations[self._which_waypoint][1]], dtype=np.float32) # Base position
-            self._target_location[0] += np.float32(np.random.rand(1)*(self.waypoints_locations[self._which_waypoint][3]-self.waypoints_locations[self._which_waypoint][2]) + self.waypoints_locations[self._which_waypoint][2]) # Random contr. on target x
-            self._target_location[1] += np.float32(np.random.rand(1)*(self.waypoints_locations[self._which_waypoint][5]-self.waypoints_locations[self._which_waypoint][4]) + self.waypoints_locations[self._which_waypoint][4]) # Random contr. on target y
+            self._target_location = np.array([self.waypoints_locations[self._path][self._which_waypoint][0], self.waypoints_locations[self._path][self._which_waypoint][1]], dtype=np.float32) # Base position
+            self._target_location[0] += np.float32(np.random.rand(1)*(self.waypoints_locations[self._path][self._which_waypoint][3]-self.waypoints_locations[self._path][self._which_waypoint][2]) + self.waypoints_locations[self._path][self._which_waypoint][2]) # Random contr. on target x
+            self._target_location[1] += np.float32(np.random.rand(1)*(self.waypoints_locations[self._path][self._which_waypoint][5]-self.waypoints_locations[self._path][self._which_waypoint][4]) + self.waypoints_locations[self._path][self._which_waypoint][4]) # Random contr. on target y
             
     def randomize_robot_location(self):
         ## This method randomizes robot's initial position based on self._randomize_env_level (0, 1, 2, 3, 4, 5)
@@ -416,8 +550,8 @@ class HospitalBotEnv(RobotController, Env):
             orientation_z = float(math.sin(angle/2))
             orientation_w = float(math.cos(angle/2))
 
-        # RANDOM LEVEL 1, 3 and 6 - Single location randomization
-        if (self._randomize_env_level == 1) or (self._randomize_env_level == 3) or (self._randomize_env_level == 6):
+        # RANDOM LEVEL 1, 3 and 7 - Single location randomization
+        if (self._randomize_env_level == 1) or (self._randomize_env_level == 3) or (self._randomize_env_level == 7):
             # This method randomizes robot's initial position in a simple way
             position_x = float(1) + float(np.random.rand(1)*2-1) # Random contribution [-1,1]
             position_y = float(16) + float(np.random.rand(1) - 0.5) # Random contribution [-0.5,0.5]
@@ -442,6 +576,28 @@ class HospitalBotEnv(RobotController, Env):
             position_x = float(self.robot_locations[self._location][0]) + float(np.random.rand(1)*(self.robot_locations[self._location][4] - self.robot_locations[self._location][3]) + self.robot_locations[self._location][3])
             position_y = float(self.robot_locations[self._location][1]) + float(np.random.rand(1)*(self.robot_locations[self._location][6] - self.robot_locations[self._location][5]) + self.robot_locations[self._location][5])
             angle = float(math.radians(self.robot_locations[self._location][2]) + math.radians(np.random.rand(1)*(self.robot_locations[self._location][8] - self.robot_locations[self._location][7]) + self.robot_locations[self._location][7]))
+            orientation_z = float(math.sin(angle/2))
+            orientation_w = float(math.cos(angle/2))
+
+        # RANDOM LEVEL 6 - Short-range targets Evaluation mode
+        if (self._randomize_env_level == 6):
+            # Randomly decides which location to pick for spawning
+            self._location = np.random.randint(0,len(self.eval_locations[0]))
+            # Here we set all the coordinates
+            position_x = float(self.eval_locations[0][self._location][0]) + float(np.random.rand(1)*(self.eval_locations[0][self._location][4] - self.eval_locations[0][self._location][3]) + self.eval_locations[0][self._location][3])
+            position_y = float(self.eval_locations[0][self._location][1]) + float(np.random.rand(1)*(self.eval_locations[0][self._location][6] - self.eval_locations[0][self._location][5]) + self.eval_locations[0][self._location][5])
+            angle = float(math.radians(self.eval_locations[0][self._location][2]) + math.radians(np.random.rand(1)*(self.eval_locations[0][self._location][8] - self.eval_locations[0][self._location][7]) + self.eval_locations[0][self._location][7]))
+            orientation_z = float(math.sin(angle/2))
+            orientation_w = float(math.cos(angle/2))
+
+        # RANDOM LEVEL 6.5 - Long-range targets Evaluation mode
+        if (self._randomize_env_level == 6.5):
+            # Randomly decides which location to pick for spawning
+            self._location = np.random.randint(0,len(self.eval_locations_lr[0]))
+            # Here we set all the coordinates
+            position_x = float(self.eval_locations_lr[0][self._location][0]) + float(np.random.rand(1)*(self.eval_locations_lr[0][self._location][4] - self.eval_locations_lr[0][self._location][3]) + self.eval_locations_lr[0][self._location][3])
+            position_y = float(self.eval_locations_lr[0][self._location][1]) + float(np.random.rand(1)*(self.eval_locations_lr[0][self._location][6] - self.eval_locations_lr[0][self._location][5]) + self.eval_locations_lr[0][self._location][5])
+            angle = float(math.radians(self.eval_locations_lr[0][self._location][2]) + math.radians(np.random.rand(1)*(self.eval_locations_lr[0][self._location][8] - self.eval_locations_lr[0][self._location][7]) + self.eval_locations_lr[0][self._location][7]))
             orientation_z = float(math.sin(angle/2))
             orientation_w = float(math.cos(angle/2))
 
@@ -538,12 +694,39 @@ class HospitalBotEnv(RobotController, Env):
         #self.get_logger().info("Angular velocity: " + str(action_angular))
 
         return np.array([action_linear, action_angular], dtype=np.float32)
-    
+
+    def compute_statistics(self, info):
+        ## This method is used to compute statistic when in Evaluation mode (6, 6.5) or in Path Planning mode (7)
+        if (info["distance"] < self._minimum_dist_from_target):
+                # If the agent reached the target it gets a positive reward
+                self._successes += 1
+                if (self._which_waypoint == len(self.waypoints_locations[0])-1):
+                    self._completed_paths += 1
+                #self.get_logger().info("Agent: X = " + str(self._agent_location[0]) + " - Y = " + str(self._agent_location[1]))
+        elif (any(info["laser"] < self._minimum_dist_from_obstacles)):
+                # If the agent hits an abstacle it gets a negative reward
+                self._failures += 1
+        else:
+            pass
+
     def close(self):
         ## Shuts down the node to avoid creating multiple nodes on re-creation of the env
-        self.destroy_client(self.client_sim)
+        # Print achieved data
+        if (self._randomize_env_level >= 6):
+            self.get_logger().info("Number of episodes: " + str(self._num_episodes-1))
+            self.get_logger().info("Successes: " + str(self._successes))
+            self.get_logger().info("Failures: " + str(self._failures))
+            if (self._randomize_env_level == 7):
+                self.get_logger().info("Completed paths: " + str(self._completed_paths))
+                self.get_logger().info("Truncated episodes: " + str(self._num_episodes-1 - self._completed_paths - self._failures))
+                self.get_logger().info("Avg. targets reached x episode: " + str(self._successes/(self._num_episodes-1)))
+            else:
+                self.get_logger().info("Truncated episodes: " + str(self._num_episodes-1 - self._successes - self._failures))
+
+        # Destroy all clients/publishers/subscribers
+        """self.destroy_client(self.client_sim)
         self.destroy_client(self.client_state)
         self.destroy_publisher(self.action_pub)
         self.destroy_subscription(self.pose_sub)
-        self.destroy_subscription(self.laser_sub)
+        self.destroy_subscription(self.laser_sub)"""
         self.destroy_node()
