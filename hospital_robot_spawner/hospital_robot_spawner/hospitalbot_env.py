@@ -53,7 +53,7 @@ class HospitalBotEnv(RobotController, Env):
         # 6: short-range targets evaluation mode (similar to max randomization but with new locations)
         # 6.5: long-range targets evaluation mode
         # 7: path planning evaluation mode (the robot has to reach several targets to complete the path)
-        self._randomize_env_level = 6
+        self._randomize_env_level = 5
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
@@ -61,7 +61,7 @@ class HospitalBotEnv(RobotController, Env):
         # If True, the target will appear on the simulation - SET FALSE FOR TRAINING (slows down the training)
         self._visualize_target = True
         # 0: simple reward, 1: risk seeker, 2: adaptive heuristic (Checkout the method compute_reward)
-        self._reward_method = 0
+        self._reward_method = 1
         # Initializes the maximal linear velocity used in actions
         self._max_linear_velocity = 1
         # Initializes the minimal linear velocity used in actions

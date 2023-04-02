@@ -20,7 +20,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "training"
+        self._training_mode = "retraining"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -100,10 +100,10 @@ def main(args=None):
         ## Re-train an existent model
         node.get_logger().info("Retraining an existent model")
         # Path in which we find the model
-        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'best_model.zip')
+        trained_model_path = os.path.join(home_dir, pkg_dir, 'rl_models', 'PPO_risk_seeker.zip')
         # Here we load the rained model
         custom_obj = {'action_space': env.action_space, 'observation_space': env.observation_space}
-        model = PPO.load(trained_model_path, env=env)#, custom_objects=custom_obj)
+        model = PPO.load(trained_model_path, env=env, custom_objects=custom_obj)
         # Execute training
         try:
             model.learn(total_timesteps=int(20000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_risk_seeker")
