@@ -33,7 +33,7 @@ More information about the project can be found inside my thesis, which is avail
 ## Installation
 ### Prerequisites
 * ROS2 Humble or ROS2 Foxy (with Ubuntu 22.04 LTS or Ubuntu 20.04 LTS, respectively) - [install ROS2 Humble](https://docs.ros.org/en/humble/Installation.html);
-* Gazebo integration for ROS2 - [gazebo_ros_pkgs](http://classic.gazebosim.org/tutorials?tut=ros2_installing&cat=connect_ros);
+* Gazebo integration for ROS2 - [install gazebo_ros_pkgs](http://classic.gazebosim.org/tutorials?tut=ros2_installing&cat=connect_ros);
 * Stable Baselines3 (includes also Gym) - [install Stable Baselines3](https://stable-baselines3.readthedocs.io/en/master/guide/install.html);
 * Tensorboard - [install Tensorboard with pyp](https://pypi.org/project/tensorboard/);
 * Optuna (for hyperparameters tuning) - [install Optuna](https://optuna.org/#installation);
