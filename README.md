@@ -44,7 +44,7 @@ First of all, clone this repository inside the src folder of your ROS2 workspace
 cd ~/ros2_ws/src
 git clone https://github.com/TommasoVandermeer/Hospitalbot-Path-Planning.git
 ```
-Copy all the files inside the `models` folder inside the `~/.gazebo/models` repository. However, if you have never run Gazebo, the `~/.gazebo/models` folder might not exist yet. To create it, simply launch the empty world:
+Copy all the files inside the `models` and `photos` folders inside the `~/.gazebo` repository. However, if you have never run Gazebo, the `~/.gazebo/models` and `~/.gazebo/photos` folders might not exist yet. To create them, simply launch the empty world:
 ```
 gazebo
 ```
@@ -52,6 +52,7 @@ Now, close the Gazebo window and the folder should have been created. Copy the f
 ```
 cd ~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner
 cp -r models/. ~/.gazebo/models
+cp -r photos/. ~/.gazebo/photos
 ```
 At this point, build your ROS2 workspace to effectively install the package (replace `ros2_ws` with the name of your ROS2 workspace).
 ```
