@@ -8,12 +8,13 @@ This repository contains an application using ROS2 Humble, Gazebo, OpenAI Gym an
 ![hospitalbot-gif](.images/hospitalbot.gif)
 
 The robot employed is a Pioneer 3AT with 4-wheel differential drive and a 180° laser for obstacle detection. The LIDAR collects 61 distance measurements that can range from 0.08 to 10 meters.
+
 This repository includes the following elements:
 * The 3D simulation environment of the hospital with the robot.
 * A working Gym environment to train RL agents for the motion planning problem.
 * Trained agents capable of reaching short and long distance targets inside the hospital environment while avoiding obstacles more than 80% of the time.
 
-The application should be considered as a practical example for training reinforcement learning models using the open-source software previously mentioned. This is my first project with ROS2, the code is most likely not perfect, but it worked for my purpose.
+The application should be considered as a practical example for training reinforcement learning models using the open-source software previously mentioned. It is my first project with ROS2, the code is most likely not perfect, but it worked for my purpose.
 
 ## Current status
 As this project was developed only for my Master's degree thesis, do not expect many updates over time. I published my work in the hope that I could help someone like me who is starting from scratch with ROS2 applications.
@@ -69,8 +70,8 @@ The application is quite complicated because it includes various modes. For this
 ### Run a random agent
 Running a random agent helps to understand the basic concepts of the Gym environment developed. Before running the commands, some files need to be edited.
 
-* Open the `hospitalbot_env.py` file, search the `self._randomize_env_level` attribute of the **HospitalBotEnv** class and set one of the ones available (recommended: 0, 3, or 5). Also, make sure that the `self._visualize_target` attribute is set to True, otherwise the target will not be visualized. **Save the file at the end**.
-* Edit the `start_training.py` file as follows. Search the `self._training_mode` attribute of the **TrainingNode** classe and assign the "random_agent" string to it. Below in the code, the number of episode to be simulated can be set (it should be 10 by default). **Save the file at the end**.
+* Open the "hospitalbot_env.py" file, search the `self._randomize_env_level` attribute of the **HospitalBotEnv** class and set one mode between the ones available (recommended: 0, 3, or 5). Also, make sure that the `self._visualize_target` attribute is set to True, otherwise the target will not be visualized. **Save the file at the end**.
+* Edit the "start_training.py" file as follows. Search the `self._training_mode` attribute of the **TrainingNode** classe and assign the "random_agent" string to it. Below in the code, the number of episode to be simulated can be set (it should be 10 by default). **Save the file at the end**.
 * Now, build your package again (replace `ros2_ws` with the name of your ROS2 workspace): `cd ~/ros2_ws;
 colcon build --packages-select hospital_robot_spawner`.
 
@@ -86,7 +87,7 @@ ros2 launch hospital_robot_spawner start_training.launch.py
 ### Run a trained agent
 There are currently (05/04/2023) 3 trained agents inside the `rl_models` folder. To test one of them,  some files need to be edited first.
 
-* Edit the `trained_agent.py` script as follows. Find the `trained_model_path` variable and replace the last element of the `os.path.join` with the name of the desired agent (e.g., PPO_risk_seeker.zip). Save the file at the end.
+* Edit the "trained_agent.py" script as follows. Find the `trained_model_path` variable and replace the last element of the `os.path.join` with the name of the desired agent (e.g., PPO_risk_seeker.zip). Save the file at the end.
 * Edit the `hospitalbot_env.py` file to make sure that the correct mode is selected. Search the `self._randomize_env_level` attribute of the **HospitalBotEnv** class and pick one of the listed modalities (e.g., 6). Also, make sure that the `self._visualize_target` attribute is set to True, otherwise the target will not be visualized. Save the file at the end.
 * Now, build your package again (replace `ros2_ws` with the name of your ROS2 workspace): `cd ~/ros2_ws;
 colcon build --packages-select hospital_robot_spawner`.
