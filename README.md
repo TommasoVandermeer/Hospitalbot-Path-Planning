@@ -13,12 +13,12 @@ This repository includes the following elements:
 * A working Gym environment to train RL agents for the motion planning problem.
 * Trained agents capable of reaching short and long distance targets inside the hospital environment while avoiding obstacles more than 80% of the time.
 
-The application should be considered as a practical example for training reinforcement learning models using the open-source software previously mentioned.
+The application should be considered as a practical example for training reinforcement learning models using the open-source software previously mentioned. This is my first project with ROS2, the code is most likely not perfect, but it worked for my purpose.
 
 ## Current status
 As this project was developed only for my Master's degree thesis, do not expect many updates over time. I published my work in the hope that I could help someone like me who is starting from scratch with ROS2 applications.
 
-More information about the project can be found inside my thesis, which is available here (NOT YET AVAILABLE). I hope it helps :).
+More information about the project can be found inside my thesis, which is available here (NOT AVAILABLE YET). I hope it helps :).
 
 ## Table of contents
 - [Installation](#installation)
