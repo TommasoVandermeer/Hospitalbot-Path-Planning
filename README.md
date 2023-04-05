@@ -26,7 +26,7 @@ More information about the project can be found inside my thesis, which is avail
 - [Getting started](#getting-started)
     - [Run a random agent](#run-a-random-agent)
     - [Run a trained agent](#run-a-trained-agent)
-    - [Train a new agent](#train-a-new-agent) (WORK IN PROGRESS)
+    - [Train a new agent](#train-a-new-agent)
     - [Hyperparameters tuning](#hyperparameters-tuning) (WORK IN PROGRESS)
     - [Re-train an existent agent](#re-train-an-existent-agent) (WORK IN PROGRESS)
 - [References](#references)
