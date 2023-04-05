@@ -53,7 +53,7 @@ class HospitalBotEnv(RobotController, Env):
         # 6: short-range targets evaluation mode (similar to max randomization but with new locations)
         # 6.5: long-range targets evaluation mode
         # 7: path planning evaluation mode (the robot has to reach several targets to complete the path)
-        self._randomize_env_level = 5
+        self._randomize_env_level = 7
         # If True, the observation space is normalized between [0,1] (except distance which is between [0,6], see below)
         self._normalize_obs = True
         # If True, the action space is normalized between [-1,1]
@@ -262,6 +262,44 @@ class HospitalBotEnv(RobotController, Env):
                 [0, -24.6, -1, 1, -0.5, 0.5],
                 [-4.9, -28.8, -0.5, 0.5, -0.5, 0.5],
                 [-4.9, -33.8, -1, 1, -0.5, 0.5]
+            ],
+            # Fourth path
+            [
+                [0.7, 11.8, -1, 1, -1, 1],
+                [4.7, 10.6, -1, 1, -0.5, 0.5],
+                [2.7, 7.5, -0.5, 0.5, -0.5, 0.5],
+                [4.9, 4.1, -0.5, 0.5, -0.5, 0.5],
+                [5.1, 0, 0, 0, 0, 0],
+                [1.4, 2.1, -0.5, 0.5, -0.5, 0.5],
+                [-3.3, 1.3, -0.5, 0.5, -0.5, 0.5],
+                [-5.1, -1.5, -0.5, 0.5, -0.5, 0.5],
+                [-5, -5, -0.5, 0.5, -0.5, 0.5],
+                [-4.9, -8.6, -0.5, 0.5, -0.5, 0.5],
+                [-4.9, -14.5, -1, 1, -0.5, 0.5],
+                [1.1, -14.5, -1, 1, -0.5, 0.5],
+                [4.9, -14.8, -0.5, 0.5, -0.5, 0.5],
+                [5.1, -9.4, -0.5, 0.5, -0.5, 0.5],
+                [1.1, -7.7, 0, 0, 0, 0],
+                [-3, -8.6, -0.5, 0.5, -0.5, 0.5]
+            ],
+            # Fifth path
+            [
+                [-2.4, 12.7, -1, 1, -1, 1],
+                [-0.5, 10, -0.5, 0.5, -0.5, 0.5],
+                [-4.8, 4, -0.5, 0.5, -0.5, 0.5],
+                [-4.6, -0.8, 0, 0, 0, 0],
+                [-5, -5.8, -0.5, 0.5, -0.5, 0.5],
+                [-2.2, -8.6, -0.5, 0.5, -0.5, 0.5],
+                [1.1, -7.7, 0, 0, 0, 0],
+                [5.5, -9, -0.5, 0.5, 0, 0],
+                [8.8, -8.7, 0, 0, 0, 0],
+                [8.3, -5.1, -0.5, 0.5, -0.5, 0.5],
+                [8.1, -1.8, -0.5, 0.5, -0.5, 0.5],
+                [8.3, -5.1, -0.5, 0.5, -0.5, 0.5],
+                [8.8, -8.7, 0, 0, 0, 0],
+                [8.3, -5.1, -0.5, 0.5, -0.5, 0.5],
+                [8.1, -1.8, -0.5, 0.5, -0.5, 0.5],
+                [8.3, -5.1, -0.5, 0.5, -0.5, 0.5]
             ]
         ]
 

@@ -32,7 +32,7 @@ def main(args=None):
         id="HospitalBotEnv-v0",
         entry_point="hospital_robot_spawner.hospitalbot_env:HospitalBotEnv",
         #entry_point="hospital_robot_spawner.hospitalbot_simplified_env:HospitalBotSimpleEnv",
-        max_episode_steps=300,
+        max_episode_steps=3000,
     )
 
     env = gym.make('HospitalBotEnv-v0')
@@ -50,7 +50,7 @@ def main(args=None):
     model = PPO.load(trained_model_path, env=env, custom_objects=custom_obj)
 
     # Evaluating the trained agent
-    Mean_ep_rew, Num_steps = evaluate_policy(model, env=env, n_eval_episodes=1000, return_episode_rewards=True, deterministic=True)
+    Mean_ep_rew, Num_steps = evaluate_policy(model, env=env, n_eval_episodes=100, return_episode_rewards=True, deterministic=True)
 
     # Print harvested data
     node.get_logger().info("Mean Reward: " + str(np.mean(Mean_ep_rew)) + " - Std Reward: " + str(np.std(Mean_ep_rew)))
