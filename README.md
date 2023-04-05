@@ -79,13 +79,13 @@ After it is all set, launch the world file:
 ```
 ros2 launch hospital_robot_spawner gazebo_world.launch.py
 ```
-Finally, run the random agent script.
+Finally, open another terminal and run the random agent script.
 ```
 ros2 launch hospital_robot_spawner start_training.launch.py
 ```
 
 ### Run a trained agent
-There are currently (05/04/2023) 3 trained agents inside the `rl_models` folder. To test one of them,  some files need to be edited first.
+There are various trained agents inside the `rl_models` folder. To test one of them, some files need to be edited first.
 
 * Edit the "trained_agent.py" script as follows. Find the `trained_model_path` variable and replace the last element of the `os.path.join` with the name of the desired agent (e.g., PPO_risk_seeker.zip). Save the file at the end.
 * Edit the "hospitalbot_env.py" file to make sure that the correct mode is selected. Search the `self._randomize_env_level` attribute of the **HospitalBotEnv** class and pick one of the listed modalities (e.g., 6). Also, make sure that the `self._visualize_target` attribute is set to True, otherwise the target will not be visualized. Save the file at the end.
@@ -96,12 +96,28 @@ After it is all set, launch the world file:
 ```
 ros2 launch hospital_robot_spawner gazebo_world.launch.py
 ```
-Finally, run the trained agent.
+Finally, open another terminal and run the trained agent.
 ```
 ros2 launch hospital_robot_spawner trained_agent.launch.py
 ```
 ### Train a new agent
-WORK IN PROGRESS
+* Firstly, edit the "hospitalbot_env.py" file. Set the `self._randomize_env_level` attribute to "5" as this mode implements the best setting to train an agent. Also, make sure that the `self._visualize_target` attribute is set to False, target visualization slows down the training significantly.
+* Open the "start_training.py" file. Set the `self._training_mode` attribute to "training". Scroll down to the training section of the code inside the `elif node._training_mode == "training"` condition. Here, specify the number of total timesteps for which the agent is trained, and set the name of the agent file and the log file as you please.
+
+Once the changes are made, launch the training world. This launch file will not launch the graphical interface of Gazebo to make the training faster.
+```
+ros2 launch hospital_robot_spawner headless_world.launch.py
+```
+Finally, open another terminal and start the training using the command below.
+```
+ros2 launch hospital_robot_spawner start_training.launch.py
+```
+If you want to monitor the training process, open another terminal and type these commands (replace `ros2_ws` with the name of your ROS2 workspace).
+```
+cd ~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner
+tensorboard --logdir=logs
+```
+At the end of the terminal there should be a link that you can open to visualize the tensorboard toolkit.
 
 ### Hyperparameters tuning
 WORK IN PROGRESS
