@@ -103,6 +103,8 @@ ros2 launch hospital_robot_spawner trained_agent.launch.py
 ### Train a new agent
 * Firstly, edit the "hospitalbot_env.py" file. Set the `self._randomize_env_level` attribute to "5" as this mode implements the best setting to train an agent. Also, make sure that the `self._visualize_target` attribute is set to False, target visualization slows down the training significantly.
 * Open the "start_training.py" file. Set the `self._training_mode` attribute to "training". Scroll down to the training section of the code inside the `elif node._training_mode == "training"` condition. Here, specify the number of total timesteps for which the agent is trained, and set the name of the agent file and the log file as you please.
+* Now, build your package again (replace `ros2_ws` with the name of your ROS2 workspace): `cd ~/ros2_ws;
+colcon build --packages-select hospital_robot_spawner`.
 
 Once the changes are made, launch the training world. This launch file will not launch the graphical interface of Gazebo to make the training faster.
 ```
