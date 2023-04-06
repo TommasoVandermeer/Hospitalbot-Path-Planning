@@ -1,6 +1,6 @@
 # Hospitalbot path planning
 
-> An infrastructure to train RL agents for a motion planning problem in a indoor environment (built with ROS2, Gazebo, OpenAI Gym, and Stable Baselines3).
+> An infrastructure to train RL agents for a motion planning problem in an indoor environment (built with ROS2, Gazebo, OpenAI Gym, and Stable Baselines3).
 
 ## Description
 This repository contains an application using ROS2 Humble, Gazebo, OpenAI Gym and Stable Baselines3 to train reinforcement learning agents which generate a feasible sequence of motion controls for a robot with a differential drive and a LIDAR to solve a path planning problem.
@@ -34,6 +34,7 @@ More information about the project can be found inside my thesis, which is avail
 ## Installation
 ### Prerequisites
 * ROS2 Humble or ROS2 Foxy (with Ubuntu 22.04 LTS or Ubuntu 20.04 LTS, respectively) - [install ROS2 Humble](https://docs.ros.org/en/humble/Installation.html);
+* An already configured ROS2 workspace - [ROS2 workspace creation tutorial](https://www.youtube.com/watch?v=3GbrKQ7G2P0);
 * Gazebo integration for ROS2 - [install gazebo_ros_pkgs](http://classic.gazebosim.org/tutorials?tut=ros2_installing&cat=connect_ros);
 * Stable Baselines3 (includes also Gym) - [install Stable Baselines3](https://stable-baselines3.readthedocs.io/en/master/guide/install.html);
 * Tensorboard - [install Tensorboard with pyp](https://pypi.org/project/tensorboard/);
@@ -44,11 +45,11 @@ First of all, clone this repository inside the src folder of your ROS2 workspace
 cd ~/ros2_ws/src
 git clone https://github.com/TommasoVandermeer/Hospitalbot-Path-Planning.git
 ```
-Copy all the files inside the `models` and `photos` folders inside the `~/.gazebo` repository. However, if you have never run Gazebo, the `~/.gazebo/models` and `~/.gazebo/photos` folders might not exist yet. To create them, simply launch the empty world:
+You will need to copy all the files inside the `models` and `photos` folders inside the `~/.gazebo` repository. However, if you have never run Gazebo, the `~/.gazebo/models` and `~/.gazebo/photos` folders might not exist yet. To create them, simply launch the Gazebo empty world:
 ```
 gazebo
 ```
-Now, close the Gazebo window and the folder should have been created. Copy the files using these commands (replace `ros2_ws` with the name of your ROS2 workspace):
+Now, close the Gazebo window and the folders should have been created. Copy the files using these commands (replace `ros2_ws` with the name of your ROS2 workspace):
 ```
 cd ~/ros2_ws/src/Hospitalbot-Path-Planning/hospital_robot_spawner
 cp -r models/. ~/.gazebo/models
