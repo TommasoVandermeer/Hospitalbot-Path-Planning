@@ -19,7 +19,7 @@ The application should be considered as a practical example for training reinfor
 ## Current status
 As this project was developed only for my Master's degree thesis, do not expect many updates over time. I published my work in the hope that I could help someone like me who is starting from scratch with ROS2 applications.
 
-More information about the project can be found inside my thesis, which is available here (NOT AVAILABLE YET). I hope it helps :).
+More information about the project can be found inside my thesis, which is available [here](.documents/A_reinforcement_learning_approach_to_path_planning_for_mobile_robots.pdf).
 
 ## Table of contents
 - [Installation](#installation)
