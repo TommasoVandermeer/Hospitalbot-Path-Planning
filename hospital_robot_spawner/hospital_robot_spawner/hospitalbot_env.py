@@ -40,7 +40,7 @@ class HospitalBotEnv(RobotController, Env):
         # ENVIRONMENT PARAMETERS
         self.robot_name = 'HospitalBot'
         # Initializes the Target location (x,y) - effective only for randomization level 0 and 1 (see below)
-        self._target_location = np.array([-3, 10], dtype=np.float32) # Default is [1, 10]
+        self._target_location = np.array([1, 10], dtype=np.float32) # Default is [1, 10]
         # Initializes the starting agent location for each episode (x,y,angle) - effective only for randomization level 0 and 2 (see below)
         self._initial_agent_location = np.array([1, 16, -90], dtype=np.float32) # Default is [1, 16, -90]
         # Defines the level of randomization of the env, the more you randomize the more the model will be generalizable (no overfitting)
