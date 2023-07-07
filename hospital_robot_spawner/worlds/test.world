@@ -28,13 +28,82 @@
     <include>
       <uri>model://sun</uri>
     </include>
-    <model name="aws_robomaker_hospital_floor_01_floor_1">
+    <include>
+      <uri>model://ground_plane</uri>
+      <pose>0 0 -0.1 0 -0 0</pose>
+    </include>
+    <!-- MODELS -->
+    <model name="left_corridor_wall">
       <allow_auto_disable>false</allow_auto_disable>
-      <include>
-        <uri>model://aws_robomaker_hospital_floor_01_floor</uri>
-        <static>true</static>
-        <pose>-0.001425 -0.014447 0 0 -0 0</pose>
-      </include>
+      <static>true</static>
+      <pose>1 0 1.2 0 0 0</pose>
+      <static>true</static>
+      <link name="left_corridor_wall_link">
+        <collision name="left_corridor_wall_collision">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 5 2.4</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="left_corridor_wall_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 5 2.4</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+    <model name="right_corridor_wall">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>-1 0 1.2 0 0 0</pose>
+      <static>true</static>
+      <link name="right_corridor_wall_link">
+        <collision name="right_corridor_wall_collision">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 5 2.4</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="right_corridor_wall_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 5 2.4</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+    <model name="obstacle">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>0.5 0.5 0.5 0 0 0</pose>
+      <static>true</static>
+      <link name="obstacle_link">
+        <collision name="obstacle_collision">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1 1 1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="obstacle_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1 1 1</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
     </model>
     <!--model name="aws_robomaker_hospital_floor_01_walls_1">
       <allow_auto_disable>false</allow_auto_disable>
@@ -55,13 +124,13 @@
           <pose>0 -0.18 0.05 0 -1.5707963267948966 0</pose>
           <geometry>
             <box>
-              <size>0.44 1.62 0.60</size>
+              <size>0.44 1.40 0.60</size>
             </box>
           </geometry>
         </collision>
       </link>
-    </model>
-
+    </model> 
+    <!-- Other actor collision models
     <model name="actor2_collision_model">
     <allow_auto_disable>false</allow_auto_disable>
       <pose>0 0 -100 0 0 0</pose>
@@ -175,12 +244,12 @@
           </geometry>
         </collision>
       </link>
-    </model> 
+    </model> -->
 
     <!-- ACTORS -->
     <!-- actor1 -->
     <actor name="actor1">
-      <pose>3 10 1.25 0 0 0</pose>
+      <pose>0 5 1.25 0 0 0</pose>
       <skin>
         <filename>walk.dae</filename>
         <scale>1.0</scale>
@@ -219,10 +288,16 @@
         </ignore_obstacles>
         <trajectory>
           <cyclic>true</cyclic>
-          <waypoint>0 10 0</waypoint>
-          <waypoint>0 15 0</waypoint>
+          <waypoint>0 -5 0</waypoint>
+          <waypoint>0 -1.25 0</waypoint>
+          <waypoint>-2 -1.25 0</waypoint>
+          <waypoint>-2 1.25 0</waypoint>
+          <waypoint>0 1.25 0</waypoint>
+          <waypoint>0 5 0</waypoint>
         </trajectory>
       </plugin>
+      <!-- LASER -->
+      
       <!-- Enable collisions -->
       <plugin name="actor1_collision" filename="libAttachModelPlugin.so">
         <link>
@@ -231,7 +306,7 @@
             <model_name>actor1_collision_model</model_name>
           </model>
         </link>
-      </plugin> 
+      </plugin>
     </actor>
 
     <!-- Other actors 

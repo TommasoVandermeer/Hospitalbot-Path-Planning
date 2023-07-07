@@ -32,11 +32,11 @@ def generate_launch_description():
     #spawn_entity = Node(package='gazebo_ros', node_executable='spawn_entity.py',
     #                    arguments=['-entity', 'demo', 'x', 'y', 'z'],
     #                    output='screen')
-    spawn_entity = Node(package='hospital_robot_spawner', executable='spawn_demo',
-                        arguments=['HospitalBot', 'demo', '1', '16.0', '0.0'],
-                        output='screen')
+    # spawn_entity = Node(package='hospital_robot_spawner', executable='spawn_demo',
+    #                     arguments=['HospitalBot', 'demo', '1', '16.0', '0.0'],
+    #                     output='screen')
 
     return LaunchDescription([
         gazebo,
-        spawn_entity,
+        # spawn_entity,
     ])
