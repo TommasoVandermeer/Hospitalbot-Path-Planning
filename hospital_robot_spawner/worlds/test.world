@@ -81,6 +81,54 @@
         </visual>
       </link>
     </model>
+    <!-- <model name="right2_corridor_wall">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>-1 1.25 1.2 0 0 0</pose>
+      <static>true</static>
+      <link name="right2_corridor_wall_link">
+        <collision name="right2_corridor_wall_collision">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4 2.5 2.4</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="right2_corridor_wall_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4 2.5 2.4</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+    <model name="right3_corridor_wall">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>-1 -1.25 1.2 0 0 0</pose>
+      <static>true</static>
+      <link name="right3_corridor_wall_link">
+        <collision name="right3_corridor_wall_collision">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4 2.5 2.4</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="right3_corridor_wall_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4 2.5 2.4</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model> -->
     <model name="obstacle">
       <allow_auto_disable>false</allow_auto_disable>
       <static>true</static>
@@ -262,13 +310,13 @@
       <!-- SFM Plugin -->
       <plugin name="actor1_plugin" filename="libPedestrianSFMPlugin.so">
         <goal_weight>2.0</goal_weight>
-        <obstacle_weight>80.0</obstacle_weight> <!--10.0-->
+        <obstacle_weight>10.0</obstacle_weight> <!--Original: 80.0, Modified 20.0, Farina: 10.0-->
         <social_weight>15</social_weight> <!--2.1-->
         <group_gaze_weight>0.0</group_gaze_weight>
         <group_coh_weight>0.0</group_coh_weight>
         <group_rep_weight>0.0</group_rep_weight>
         <velocity>0.9</velocity>
-        <radius>0.4</radius>
+        <radius>0.4</radius> <!-- 0.4 -->
         <animation_factor>5.1</animation_factor>
         <animation_name>walking</animation_name>
         <people_distance>6.0</people_distance>
@@ -285,14 +333,21 @@
           <model>actor3_collision_model</model>
           <model>actor2_collision_model</model>
           <model>actor1_collision_model</model>
+          <model>waypoint1</model>
+          <model>waypoint2</model>
+          <model>waypoint3</model>
+          <model>waypoint4</model>
+          <model>waypoint5</model>
+          <model>waypoint6</model>
         </ignore_obstacles>
         <trajectory>
           <cyclic>true</cyclic>
-          <waypoint>0 -5 0</waypoint>
-          <waypoint>0 -1.25 0</waypoint>
+          <waypoint>-0.2 -5 0</waypoint>
+          <!-- <waypoint>0 5 0</waypoint> -->
+          <!-- <waypoint>0 -1.25 0</waypoint> -->
           <waypoint>-2 -1.25 0</waypoint>
           <waypoint>-2 1.25 0</waypoint>
-          <waypoint>0 1.25 0</waypoint>
+          <!-- <waypoint>0 1.25 0</waypoint> -->
           <waypoint>0 5 0</waypoint>
         </trajectory>
       </plugin>
@@ -308,6 +363,158 @@
         </link>
       </plugin>
     </actor>
+
+    <!-- WAYPOINTS VISUAL -->
+    <model name="waypoint1">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>-0.2 -5 0.05 0 0 0</pose>
+      <static>true</static>
+      <link name="waypoint1_link">
+        <collision name="waypoint1_collision">
+          <geometry>
+            <sphere><radius>0.01</radius></sphere>
+          </geometry>
+        </collision>
+        <visual name="waypoint1_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.2</radius>
+            </sphere>
+          </geometry>
+          <material>
+          <diffuse>1 0 0 1</diffuse>
+          <ambient>1 0 0 1</ambient>
+        </material>
+        </visual>
+      </link>
+    </model>
+    <!-- <model name="waypoint2">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>0 -1.25 0.05 0 0 0</pose>
+      <static>true</static>
+      <link name="waypoint2_link">
+        <collision name="waypoint2_collision">
+          <geometry>
+            <sphere><radius>0.01</radius></sphere>
+          </geometry>
+        </collision>
+        <visual name="waypoint2_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.2</radius>
+            </sphere>
+          </geometry>
+          <material>
+          <diffuse>1 0 0 1</diffuse>
+          <ambient>1 0 0 1</ambient>
+        </material>
+        </visual>
+      </link>
+    </model> -->
+    <model name="waypoint3">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>-2 -1.25 0.05 0 0 0</pose>
+      <static>true</static>
+      <link name="waypoint3_link">
+        <collision name="waypoint3_collision">
+          <geometry>
+            <sphere><radius>0.01</radius></sphere>
+          </geometry>
+        </collision>
+        <visual name="waypoint3_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.2</radius>
+            </sphere>
+          </geometry>
+          <material>
+          <diffuse>1 0 0 1</diffuse>
+          <ambient>1 0 0 1</ambient>
+        </material>
+        </visual>
+      </link>
+    </model>
+    <model name="waypoint4">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>-2 1.25 0.05 0 0 0</pose>
+      <static>true</static>
+      <link name="waypoint4_link">
+        <collision name="waypoint4_collision">
+          <geometry>
+            <sphere><radius>0.01</radius></sphere>
+          </geometry>
+        </collision>
+        <visual name="waypoint4_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.2</radius>
+            </sphere>
+          </geometry>
+          <material>
+          <diffuse>1 0 0 1</diffuse>
+          <ambient>1 0 0 1</ambient>
+        </material>
+        </visual>
+      </link>
+    </model>
+    <!-- <model name="waypoint5">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>0 1.25 0.05 0 0 0</pose>
+      <static>true</static>
+      <link name="waypoint5_link">
+        <collision name="waypoint5_collision">
+          <geometry>
+            <sphere><radius>0.01</radius></sphere>
+          </geometry>
+        </collision>
+        <visual name="waypoint5_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.2</radius>
+            </sphere>
+          </geometry>
+          <material>
+          <diffuse>1 0 0 1</diffuse>
+          <ambient>1 0 0 1</ambient>
+        </material>
+        </visual>
+      </link>
+    </model> -->
+    <model name="waypoint6">
+      <allow_auto_disable>false</allow_auto_disable>
+      <static>true</static>
+      <pose>0 5 0.05 0 0 0</pose>
+      <static>true</static>
+      <link name="waypoint6_link">
+        <collision name="waypoint6_collision">
+          <geometry>
+            <sphere><radius>0.01</radius></sphere>
+          </geometry>
+        </collision>
+        <visual name="waypoint6_visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.2</radius>
+            </sphere>
+          </geometry>
+          <material>
+          <diffuse>1 0 0 1</diffuse>
+          <ambient>1 0 0 1</ambient>
+        </material>
+        </visual>
+      </link>
+    </model>
 
     <!-- Other actors 
     <actor name="actor2">

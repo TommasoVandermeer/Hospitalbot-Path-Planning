@@ -2,13 +2,14 @@
 
 import rclpy
 from rclpy.node import Node
-from gym.envs.registration import register
+from gymnasium.envs.registration import register
 from hospital_robot_spawner.hospitalbot_env import HospitalBotEnv
 from hospital_robot_spawner.hospitalbot_simplified_env import HospitalBotSimpleEnv
-import gym
+import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.env_checker import check_env
 import os
 import numpy as np
 
@@ -38,6 +39,7 @@ def main(args=None):
     env = gym.make('HospitalBotEnv-v0')
     env = Monitor(env)
 
+    check_env(env)
 
     episodes = 10
 

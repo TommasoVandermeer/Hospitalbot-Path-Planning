@@ -1,6 +1,6 @@
 import rclpy
-from gym import Env
-from gym.spaces import Discrete, Dict, Box
+from gymnasium import Env
+from gymnasium.spaces import Discrete, Dict, Box
 import numpy as np
 from hospital_robot_spawner.robot_controller import RobotController
 import math
@@ -102,7 +102,7 @@ class HospitalBotSimpleEnv(RobotController, Env):
         # Compute Reward
         reward = self.compute_rewards(observation, info)
 
-        return observation, reward, done, info
+        return observation, reward, done, False, info
 
     def render(self):
         # Function to render env steps
@@ -139,6 +139,7 @@ class HospitalBotSimpleEnv(RobotController, Env):
 
         # Updates state and additional infos
         observation = self._get_obs()
+        info = self._get_info()
 
         # Reset the number of steps
         self._num_steps = 0
@@ -146,7 +147,7 @@ class HospitalBotSimpleEnv(RobotController, Env):
         # Debug print
         #self.get_logger().info("Exiting reset function")
         
-        return observation
+        return observation, info
 
     def _get_obs(self):
         # Returns the current state of the system

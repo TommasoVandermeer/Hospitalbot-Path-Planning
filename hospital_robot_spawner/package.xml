@@ -20,7 +20,7 @@
   <depend>gazebo_msgs</depend>
   <depend>std_srvs</depend>
   <depend>functools</depend>
-  <depend>gym</depend>
+  <depend>gymnasium</depend>
   <depend>numpy</depend>
   <depend>stable_baselines3</depend>
   <depend>math</depend>

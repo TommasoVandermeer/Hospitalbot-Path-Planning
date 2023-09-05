@@ -12,5 +12,6 @@
         "/home/tommaso/ros2_ws/build/my_robot_controller",
         "/home/tommaso/ros2_ws/install/my_robot_controller/lib/python3.8/site-packages",
         "/opt/ros/foxy/lib/python3.8/site-packages"
-    ]
+    ],
+    "ros.distro": "humble"
 }

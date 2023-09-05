@@ -1,6 +1,6 @@
 import rclpy
-from gym import Env
-from gym.spaces import Dict, Box
+from gymnasium import Env
+from gymnasium.spaces import Dict, Box
 import numpy as np
 from hospital_robot_spawner.robot_controller import RobotController
 import math
@@ -422,7 +422,7 @@ class HospitalBotEnv(RobotController, Env):
 
         #self.get_logger().info("Done: " + str(done))
 
-        return observation, reward, done, info
+        return observation, reward, done, False, info
 
     def render(self):
         # Function to render env steps
@@ -477,7 +477,7 @@ class HospitalBotEnv(RobotController, Env):
         # Debug print
         #self.get_logger().info("Exiting reset function")
         
-        return observation
+        return observation, info
 
     def _get_obs(self):
         # Returns the current state of the system

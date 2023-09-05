@@ -2,10 +2,10 @@
 
 import rclpy
 from rclpy.node import Node
-from gym.envs.registration import register
+from gymnasium.envs.registration import register
 from hospital_robot_spawner.hospitalbot_env import HospitalBotEnv
 from hospital_robot_spawner.hospitalbot_simplified_env import HospitalBotSimpleEnv
-import gym
+import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
@@ -20,7 +20,7 @@ class TrainingNode(Node):
         super().__init__("hospitalbot_training", allow_undeclared_parameters=True, automatically_declare_parameters_from_overrides=True)
 
         # Defines which action the script will perform "random_agent", "training", "retraining" or "hyperparam_tuning"
-        self._training_mode = "random_agent"
+        self._training_mode = "training"
 
         # Get training parameters from Yaml file
         #self.test = super().get_parameter('test').value
@@ -80,7 +80,7 @@ def main(args=None):
             obs = env.reset()
             done = False
             while not done:
-                obs, reward, done, info = env.step(env.action_space.sample())
+                obs, reward, done, truncated, info = env.step(env.action_space.sample())
                 node.get_logger().info("Agent state: [" + str(info["distance"]) + ", " + str(info["angle"]) + "]")
                 node.get_logger().info("Reward at step " + ": " + str(reward))
     
@@ -90,11 +90,11 @@ def main(args=None):
         model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir, n_steps=20480, gamma=0.9880614935504514, gae_lambda=0.9435887928788405, ent_coef=0.00009689939917928778, vf_coef=0.6330533453055319, learning_rate=0.00001177011863371444, clip_range=0.1482)
         # Execute training
         try:
-            model.learn(total_timesteps=int(40000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_risk_seeker")
+            model.learn(total_timesteps=int(40000000), reset_num_timesteps=False, callback=eval_callback, tb_log_name="PPO_test")
         except KeyboardInterrupt:
-            model.save(f"{trained_models_dir}/PPO_risk_seeker")
+            model.save(f"{trained_models_dir}/PPO_test")
         # Save the trained model
-        model.save(f"{trained_models_dir}/PPO_risk_seeker")
+        model.save(f"{trained_models_dir}/PPO_test")
     
     elif node._training_mode == "retraining":
         ## Re-train an existent model
