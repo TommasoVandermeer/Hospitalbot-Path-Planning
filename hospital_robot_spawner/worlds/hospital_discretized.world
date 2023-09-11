@@ -2498,7 +2498,7 @@
       </plugin>
     </actor>
     <!-- Actor1 HSFM2 -->
-    <model name="actor2_collision_model">
+    <!-- <model name="actor2_collision_model">
     <allow_auto_disable>false</allow_auto_disable>
       <pose>0 0 -100 0 0 0</pose>
       <static>true</static>
@@ -2606,9 +2606,9 @@
           </model>
         </link>
       </plugin>
-    </actor>
+    </actor> -->
     <!-- Actor3 SFM -->
-    <model name="actor3_collision_model">
+    <!-- <model name="actor3_collision_model">
     <allow_auto_disable>false</allow_auto_disable>
       <pose>0 0 -100 0 0 0</pose>
       <static>true</static>
@@ -2706,9 +2706,9 @@
           </model>
         </link>
       </plugin>
-    </actor>
+    </actor> -->
     <!-- Actor4 SFM2 -->
-    <model name="actor4_collision_model">
+    <!-- <model name="actor4_collision_model">
     <allow_auto_disable>false</allow_auto_disable>
       <pose>0 0 -100 0 0 0</pose>
       <static>true</static>
@@ -2810,6 +2810,6 @@
           </model>
         </link>
       </plugin>
-    </actor>
+    </actor> -->
   </world>
 </sdf>
